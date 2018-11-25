@@ -11,9 +11,8 @@ public class SortStrokeItem {
 		key = k;
 		HashMap<String, Integer> strokeMap = IndexFiles.strokeMap;
 		uniValues = Utils.utf8ToUnicode(k);
-		strokes = new ArrayList<Integer>(uniValues.size());
-		for (int i = 0; i < uniValues.size(); i++) {
-			String str = uniValues.get(i);
+		strokes = new ArrayList<>(uniValues.size());
+		for (String str : uniValues) {
 			//特殊符号的笔画都算0
 			strokes.add(strokeMap.getOrDefault(str, 0));
 		}

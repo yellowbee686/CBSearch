@@ -3,7 +3,6 @@ package app.cbreader.demo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map.Entry;
 
 public class Reference {
@@ -52,9 +51,7 @@ public class Reference {
 	
 	//对自己的每一条ArrayList进行排序
 	public void sortSelf() {
-		Iterator<ArrayList<String>> iteValue = frontMap.values().iterator();
-		while (iteValue.hasNext()) {
-			ArrayList<String> list = iteValue.next();
+		for (ArrayList<String> list : frontMap.values()) {
 			list.sort(String::compareTo);
 		}
 	}
@@ -180,11 +177,10 @@ public class Reference {
 			}
 		}
 		//带有问号标记的key应该和不带问号标记的排在一起 通过将count赋值进来来实现
-		for (int i = 0; i < helperList.size(); i++) {
-			SortHelper helper = helperList.get(i);
-			if(Utils.endsWithOptionalMark(helper.key)) {
-				String trueKey = helper.key.substring(0, helper.key.length()-1);
-				if(helperMap.containsKey(trueKey)) {
+		for (SortHelper helper : helperList) {
+			if (Utils.endsWithOptionalMark(helper.key)) {
+				String trueKey = helper.key.substring(0, helper.key.length() - 1);
+				if (helperMap.containsKey(trueKey)) {
 					helper.count = helperMap.get(trueKey).count;
 				}
 			}

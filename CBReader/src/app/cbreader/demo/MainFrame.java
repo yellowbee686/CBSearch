@@ -23,12 +23,11 @@ public class MainFrame extends JFrame implements ActionListener {
 	private JLabel searchLabel;
 
 	public MainFrame() throws HeadlessException {
-		// TODO Auto-generated constructor stub
+
 	}
 
 	public MainFrame(String arg0) throws HeadlessException {
 		super(arg0);
-		// TODO Auto-generated constructor stub
 		this.setSize(400, 150);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -63,7 +62,6 @@ public class MainFrame extends JFrame implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
 		if (e.getSource() == chooseBtn) {
 			dirChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			int ret = dirChooser.showOpenDialog(this);

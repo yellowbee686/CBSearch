@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -135,7 +136,7 @@ public class SearchFiles {
 //	}
 	
 	public Boolean doSearch() {
-		Boolean ret = true;
+		Boolean ret;
 		String index = "index";
 		String field = "contents";
 		IndexReader reader;
@@ -192,10 +193,10 @@ public class SearchFiles {
 		int numTotalHits = collector.getTotalHits();
 		System.out.println(numTotalHits + " total matching documents");
 		if (numTotalHits > 0) {
-			ArrayList<ArrayList<String>> arr = new ArrayList<ArrayList<String>>(strs.length);
-			ArrayList<String> pureArr = new ArrayList<String>();
+			ArrayList<ArrayList<String>> arr = new ArrayList<>();
+			ArrayList<String> pureArr = new ArrayList<>();
 			for (int i = 0; i < strs.length; i++) {
-				arr.add(new ArrayList<String>());
+				arr.add(new ArrayList<>());
 			}	
 			TopDocs results = searcher.search(query, numTotalHits);
 			ScoreDoc[] hits = results.scoreDocs;
@@ -209,24 +210,22 @@ public class SearchFiles {
 				for (int j = 0; j < contents.length; j++) {
 					contents[j]+="  doc:"+docName;
 				}
-				for (int j = 0; j < contents.length; j++) {
-					if(contents[j].contains("doc:")) {
-						String firstContent = contents[j].split("doc:")[0];
-						String retString = contents[j];
-						//检查是否符合整个词，符合则加入整个词的数组中
-						if(checkCandidate(firstContent, pureString)){
-							pureArr.add(retString);
-						}
-						//检查是否符合其他的词，加到其他词的列表中
-						for (int k = 0; k < strs.length; k++) {
-							//if (firstContent.contains(strs[k])) {
-							if(checkCandidate(firstContent, strs[k])){
-								ArrayList<String> tmpArr = arr.get(k);
-								tmpArr.add(retString);
-							}
-						}
-					}
-				}
+				for (String content : contents)
+                    if (content.contains("doc:")) {
+                        String firstContent = content.split("doc:")[0];
+                        //检查是否符合整个词，符合则加入整个词的数组中
+                        if (checkCandidate(firstContent, pureString)) {
+                            pureArr.add(content);
+                        }
+                        //检查是否符合其他的词，加到其他词的列表中
+                        for (int k = 0; k < strs.length; k++) {
+                            //if (firstContent.contains(strs[k])) {
+                            if (checkCandidate(firstContent, strs[k])) {
+                                ArrayList<String> tmpArr = arr.get(k);
+                                tmpArr.add(content);
+                            }
+                        }
+                    }
 			}
 			String dirPath = mkdir(pureString);
 			if(pureArr.size()>0){
@@ -243,7 +242,7 @@ public class SearchFiles {
 	
 	private Boolean checkCandidate(String candidate, String key){
 		int idx = -1;
-		Boolean ret = false;
+		boolean ret = false;
 		do {
 			idx = candidate.indexOf(key, idx+1);
 			//如果没有找到key或者找到的key是被包裹在【】中都不算，否则就返回true
@@ -267,7 +266,7 @@ public class SearchFiles {
 	}
 	
 	public Boolean putToFile(String str, ArrayList<String> sentences, String outDirPath) {
-		Boolean ret = true;
+		boolean ret = true;
 		
 		String outPath = outDirPath+"/"+str+"_";
 //		for (int i = 0; i < strs.length; i++) {
@@ -275,7 +274,7 @@ public class SearchFiles {
 //		}
 		SimpleDateFormat df = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		outPath += df.format(new Date())+".txt";
-		sentences.sort((s1, s2) -> s1.compareTo(s2));
+		sentences.sort(String::compareTo);
 		
 		File outFile = new File(outPath);
 		try {

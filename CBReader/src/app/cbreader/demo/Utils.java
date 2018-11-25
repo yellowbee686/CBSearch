@@ -15,8 +15,8 @@ public class Utils {
 	//有一些符号标记的key应该和不带标记的排在一起  ぃ标记为其他校勘记中得来的校注
 	private static String OPTIONAL_MARK[] = {"？", "ぃ", "ィ"}; 
 	public static boolean endsWithOptionalMark(String str) {
-		for (int i = 0; i < OPTIONAL_MARK.length; i++) {
-			if(str.endsWith(OPTIONAL_MARK[i])) {
+		for (String aOPTIONAL_MARK : OPTIONAL_MARK) {
+			if (str.endsWith(aOPTIONAL_MARK)) {
 				return true;
 			}
 		}
@@ -26,7 +26,7 @@ public class Utils {
 	public static ArrayList<String> utf8ToUnicode(String inStr) {
         char[] myBuffer = inStr.toCharArray();
         
-        ArrayList<String> sb = new ArrayList<String>(myBuffer.length);
+        ArrayList<String> sb = new ArrayList<>(myBuffer.length);
         for (int i = 0; i < inStr.length(); i++) {
         	UnicodeBlock ub = UnicodeBlock.of(myBuffer[i]);
             if(ub == UnicodeBlock.BASIC_LATIN){
@@ -53,7 +53,7 @@ public class Utils {
 	public static ArrayList<Integer> utf8ToUnicodeValue(String inStr) {
         char[] myBuffer = inStr.toCharArray();
         
-        ArrayList<Integer> sb = new ArrayList<Integer>(myBuffer.length);
+        ArrayList<Integer> sb = new ArrayList<>(myBuffer.length);
         for (int i = 0; i < inStr.length(); i++) {
         		UnicodeBlock ub = UnicodeBlock.of(myBuffer[i]);
             if(ub == UnicodeBlock.BASIC_LATIN){
@@ -78,11 +78,9 @@ public class Utils {
 		if(file.canRead()) {
 			try {
 				FileInputStream fiStream = new FileInputStream(file);
-				BufferedReader reader = new BufferedReader(
+				return new BufferedReader(
 						new InputStreamReader(fiStream, StandardCharsets.UTF_8));
-				return reader;
 			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

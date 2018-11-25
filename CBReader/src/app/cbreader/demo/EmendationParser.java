@@ -31,7 +31,7 @@ public class EmendationParser {
 	}
 	
 	private HashMap<String, String> charDecl = new HashMap<>(); //一篇文档中的引用集合
-	
+	// 解析出需要替换的难以表示的字的字典
 	private void parseDict(Element dictElement) {
 		if(null == dictElement)
 			return;
@@ -85,11 +85,99 @@ public class EmendationParser {
 	private static String origAttrValue = "taisho-notes";
 	private static String modAttrValue = "cbeta-notes";
 
-	public Boolean parseOneDoc(File doc) {
+	private String getTitle(Element bodyElement) {
+        List<Element> eles = bodyElement.elements();
+        Element tmpElement = null;
+        Boolean flag = false;
+        for (Element ele : eles) {
+            tmpElement = ele;
+            if(null!=tmpElement && "juan".equals(tmpElement.getName())) {
+                flag = true;
+                break;
+            }
+            while (null != tmpElement && null == tmpElement.element("juan"))
+                tmpElement = tmpElement.element("div");
+
+            if(null!=tmpElement && null!=tmpElement.element("juan")) {
+                flag = true;
+                tmpElement = tmpElement.element("juan");
+                break;
+            }
+        }
+        String title = "";
+        if (flag) {
+            Element jhead = tmpElement.element("jhead");
+            if (null != jhead.element("title")) {
+                title = jhead.elementText("title")+jhead.getText();
+            } else {
+                title = jhead.getText();
+            }
+        }
+        return title;
+    }
+
+    private void parseBackPart(Element textElement, List<String> strings, String fileName) {
+        HashSet<String> noteKeys = new HashSet<>();
+        Element backElement = textElement.element("back");
+        List<Element> cbs = backElement.elements();
+        for (Element element : cbs) {
+            Attribute attr = element.attribute("type");
+            // 先解析cbeta校注，并且记录下来，遇到相同的taisho时就不用解析了
+            if(origAttrValue.equals(attr.getValue()) || modAttrValue.equals(attr.getValue())) {
+                Boolean isTaisho = origAttrValue.equals(attr.getValue());
+                List<Element> notes = element.element("p").elements();
+                for (Element ele : notes) {
+                    //判断特殊=号
+                    if("note".equals(ele.getName())) {
+                        String id = ele.attributeValue("n");
+                        if(!isTaisho || isTaisho && !noteKeys.contains(id)) {
+                            //每一条内部可能有多个"g" 含有多个引用  也可能是多个"figure"
+                            String anString = parseOneNote(ele, fileName, isTaisho);
+                            anString = removeXmlAfterParse(anString);
+//								if (!isTaisho) {
+//									anString = anString.concat(Utils.CBETA_MARK);
+//								}
+                            if(!anString.isEmpty()) {
+                                strings.add(anString);
+                            }
+                        }
+                        if(!isTaisho) {
+                            noteKeys.add(id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void parseBodyPart(Element bodyElement, List<String> strings) {
+        List<Element> items = bodyElement.elements();
+	    for (Element item : items) {
+	        String name = item.getName();
+            if ("p".equals(name)) {
+                strings.add(item.getTextTrim());
+            }
+            // 列表项的单独成行
+            if ("lg".equals(name)) {
+                List<Element> itemList = item.elements();
+                for (Element innerItem : itemList) {
+                    if ("l".equals(innerItem.getName())) {
+                        strings.add(innerItem.getTextTrim());
+                    }
+                }
+            }
+        }
+    }
+
+    //解析一篇doc，
+    // parseBack表示解析异文并输出到文件中
+    // parseBody表示解析正文到文件中
+	public Boolean parseOneDoc(File doc, ParseDocType parseType) {
 		Boolean ret = true;
 		SAXReader reader = new SAXReader();
 		ArrayList<String> strings = new ArrayList<>(); //存放异文结果
 		String midPath = doc.getAbsolutePath().replace(dirPath, "");
+		//TODO 解析正文的话outDirPath应该要传不同的目录进来，或者这里当做参数传进来可能更好
 		String outPath = outDirPath + midPath;
 		System.out.println(String.format("start parse %s", outPath));
 		charDecl.clear();
@@ -102,64 +190,21 @@ public class EmendationParser {
 			parseDict(dictElement);
 			Element textElement = root.element("text");
 			Element bodyElement = textElement.element("body");
-			List<Element> eles = bodyElement.elements();
-			Element tmpElement = null;
-			Boolean flag = false;
-			for (Element ele : eles) {
-				tmpElement = ele;
-				if(null!=tmpElement && "juan".equals(tmpElement.getName())) {
-					flag = true;
-					break;
-				}
-				while (null != tmpElement && null == tmpElement.element("juan")) 
-					tmpElement = tmpElement.element("div");
-				
-				if(null!=tmpElement && null!=tmpElement.element("juan")) {
-					flag = true;
-					tmpElement = tmpElement.element("juan");
-					break;
-				}
-			}
-			String title = "";
-			if (flag) {
-				Element jhead = tmpElement.element("jhead");
-				if (null != jhead.element("title")) {
-					title = jhead.elementText("title")+jhead.getText();
-				} else {
-					title = jhead.getText();
-				}
-			}
-			HashSet<String> noteKeys = new HashSet<>();
-			Element backElement = textElement.element("back");
-			List<Element> cbs = backElement.elements();
-			for (Element element : cbs) {
-				Attribute attr = element.attribute("type");
-				// 先解析cbeta校注，并且记录下来，遇到相同的taisho时就不用解析了
-				if(origAttrValue.equals(attr.getValue()) || modAttrValue.equals(attr.getValue())) {
-					Boolean isTaisho = origAttrValue.equals(attr.getValue());
-					List<Element> notes = element.element("p").elements();
-					for (Element ele : notes) {
-						//判断特殊=号
-						if("note".equals(ele.getName())) {
-							String id = ele.attributeValue("n");
-							if(!isTaisho || isTaisho && !noteKeys.contains(id)) {
-								//每一条内部可能有多个"g" 含有多个引用  也可能是多个"figure"
-								String anString = parseOneNote(ele, fileName, isTaisho);
-								anString = removeXmlAfterParse(anString);
-//								if (!isTaisho) {
-//									anString = anString.concat(Utils.CBETA_MARK);
-//								}
-								if(!anString.isEmpty()) {
-									strings.add(anString);
-								}
-							}
-							if(!isTaisho) {
-								noteKeys.add(id);
-							}
-						}
-					}
-				}
-			}
+			String title = getTitle(bodyElement);
+
+			if (parseType == ParseDocType.BACK) {
+			    parseBackPart(textElement, strings, fileName);
+            }
+            if (parseType == ParseDocType.BODY) {
+                /*
+                TODO 序的title比较特殊，目前没有放进来，但序的正文放在卷正文前了
+                TODO SAXReader解析一个节点时无法正确判断其下的文本和其中的各种Element之间的顺序，这里没有调用parseOnePartWithG来替换显示不出的字
+                TODO 需要复查建索引的过程，索引似乎没考虑这种字，如果不做替换的话是搜索不出的
+                */
+                strings.add(title); //把title放在最前
+                parseBodyPart(bodyElement, strings);
+            }
+
 			if(!strings.isEmpty()) {
 				String segs[] = outPath.split(".xml");
 				outPath = segs[0]+"_"+title+".txt";
@@ -214,7 +259,7 @@ public class EmendationParser {
 			if(backIdx == -1) {
 				return str;
 			}
-			builder.append(str.substring(startIdx, frontIdx));
+			builder.append(str, startIdx, frontIdx);
 			startIdx = backIdx+1;
 			frontIdx = str.indexOf(FRONT_ATTR_FIX, startIdx);
 		}
@@ -265,7 +310,7 @@ public class EmendationParser {
 				if(inNote.startsWith("<note place")) {
 					int backIdx = noteStr.indexOf(BACK_ATTR_FIX, noteIdx);
 					StringBuilder sb = new StringBuilder();
-					sb.append(noteStr.substring(0, noteIdx)).append("(").append(noteStr.substring(backIdx+1, postIdx)).append(")");
+					sb.append(noteStr, 0, noteIdx).append("(").append(noteStr, backIdx+1, postIdx).append(")");
 					sb.append(noteStr.substring(postIdx+NOTE_POSTFIX.length()));
 					noteStr = sb.toString();
 				} else {
@@ -347,7 +392,7 @@ public class EmendationParser {
 				builder.append(noteStr.substring(beginIdx));
 				break;
 			}
-			builder.append(noteStr.substring(beginIdx, frontGIdx));
+			builder.append(noteStr, beginIdx, frontGIdx);
 			int backIdx = noteStr.indexOf(backfix, frontGIdx);
 			int postIdx = noteStr.indexOf(postfix, backIdx);
 			if(postIdx>backIdx) {
@@ -371,7 +416,7 @@ public class EmendationParser {
 			if(rootDir.isDirectory()) {
 				dirList.add(rootDir);
 			} else {
-				parseOneDoc(rootDir);
+				parseOneDoc(rootDir, ParseDocType.BACK);
 			}
 		} else {
 			ret = false;
@@ -387,7 +432,7 @@ public class EmendationParser {
 					} else {
 						// T用来标记大正藏
 						if(file.getName().startsWith("T"))
-							parseOneDoc(file);
+							parseOneDoc(file, ParseDocType.BACK);
 					}
 				}
 			} else {
