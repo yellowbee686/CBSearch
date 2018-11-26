@@ -9,6 +9,8 @@ import java.lang.Character.UnicodeBlock;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
+import com.sun.istack.internal.Nullable;
+
 public class Utils {
 	public static String CBETA_MARK = " @cbeta"; //用来标记某一条是cbeta的校注，用于在最后确定格式用
 	public static String LACK_WORD = "（缺字）";
@@ -71,9 +73,14 @@ public class Utils {
         }
         return sb;
     }
-	
+
+    public static String getBaseDir() {
+	    return System.getProperty("user.dir");
+    }
+
+	@Nullable
 	public static BufferedReader openFile(String relativeName) {
-		String path = System.getProperty("user.dir")+relativeName;
+		String path = getBaseDir()+relativeName;
 		File file = new File(path);
 		if(file.canRead()) {
 			try {

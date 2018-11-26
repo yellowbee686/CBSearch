@@ -81,7 +81,7 @@ public class MainFrame extends JFrame implements ActionListener {
 			SearchFiles searcher = new SearchFiles(keywords);
 			Boolean seaFlag = searcher.doSearch();
 			if (seaFlag) {
-				String outDirPath = System.getProperty("user.dir") + "/result";
+				String outDirPath = Utils.getBaseDir() + "/result";
 				JOptionPane.showMessageDialog(this, "查询成功，请到" + outDirPath + "查阅结果文件");
 			} else {
 				JOptionPane.showMessageDialog(this, "建立索引失败");

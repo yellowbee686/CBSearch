@@ -53,7 +53,7 @@ public class IndexFiles {
 		Boolean ret;
 		String indexPath = "index";
 		//System.getProperty("user.dir")返回执行java程序的目录
-		String docsPath = System.getProperty("user.dir")+"/notes";
+		String docsPath = Utils.getBaseDir()+"/notes";
 		if(parseXml) {
 			emendationParser = new EmendationParser(inPath);
 			emendationParser.parseAllDocs();
@@ -368,7 +368,7 @@ public class IndexFiles {
 	//输出整个体例
 	private void outputReferences() {
 		//操作文件
-		referenceRootPath = System.getProperty("user.dir")+"/references";
+		referenceRootPath = Utils.getBaseDir()+"/references";
 		File outDir = new File(referenceRootPath);
 		if(!outDir.exists()) {
 			outDir.mkdirs();

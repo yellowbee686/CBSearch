@@ -257,7 +257,7 @@ public class SearchFiles {
 	//创建文件夹，返回文件夹路径
 	public String mkdir(String key) {
 		SimpleDateFormat df = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
-		String outDirPath = System.getProperty("user.dir")+"/result/"+key+df.format(new Date());
+		String outDirPath = Utils.getBaseDir()+"/result/"+key+df.format(new Date());
 		File outDir = new File(outDirPath);
 		if(!outDir.exists() && !outDir.isDirectory()) {
 			outDir.mkdirs();

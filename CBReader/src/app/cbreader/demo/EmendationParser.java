@@ -23,7 +23,7 @@ public class EmendationParser {
 	
 	public EmendationParser(String path) {
 		dirPath = path;
-		outDirPath = System.getProperty("user.dir")+"/notes";
+		outDirPath = Utils.getBaseDir()+"/notes";
 		File outDir = new File(outDirPath);
 		if(!outDir.exists()) {
 			outDir.mkdirs();
