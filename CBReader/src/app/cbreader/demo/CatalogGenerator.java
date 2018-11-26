@@ -72,6 +72,8 @@ public class CatalogGenerator {
                 }
                 paths.push(title);
                 String[] papers = line.split("；");
+                // Stack的foreach依然是顺序遍历
+                mkdir(makeRelativePath(paths));
                 for (String paper : papers) {
                     //TODO paper是 T0068 賴吒和羅經 这样的结构，
                     //TODO 需要重构 parseOneDoc 进行拆分 前面获取path和后面写入对应文件的path都需要重构
@@ -87,7 +89,7 @@ public class CatalogGenerator {
         }
     }
 
-    private String makeRelativePath(Stack<String> paths) {
+    private String makeRelativePath(List<String> paths) {
         String ret = "";
         for (String path : paths) {
             ret += path + "/";
