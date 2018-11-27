@@ -168,18 +168,24 @@ public class EmendationParser {
             }
         }
     }
+    // 拼接要输出的目录path，输入是解析的源文件file
+    private String getOutputPath(File doc) {
+        String midPath = doc.getAbsolutePath().replace(dirPath, "");
+        String outPath = outDirPath + midPath;
+        outPath = outPath.replace("\r", "").replace("\n", "");
+        String parts[] = outPath.split(".xml");
+        return parts[0];
+    }
 
     //解析一篇doc，
     // parseBack表示解析异文并输出到文件中
     // parseBody表示解析正文到文件中
-	public Boolean parseOneDoc(File doc, ParseDocType parseType) {
+    // 为了适配两边的需求，已经改成无状态的了
+	public Boolean parseOneDoc(File doc, ParseDocType parseType, String outPath) {
 		Boolean ret = true;
 		SAXReader reader = new SAXReader();
 		ArrayList<String> strings = new ArrayList<>(); //存放异文结果
-		String midPath = doc.getAbsolutePath().replace(dirPath, "");
-		//TODO 解析正文的话outDirPath应该要传不同的目录进来，或者这里当做参数传进来可能更好
-		String outPath = outDirPath + midPath;
-		System.out.println(String.format("start parse %s", outPath));
+        System.out.println(String.format("start parse %s", outPath));
 		charDecl.clear();
 		try {
 			Document document = reader.read(doc);
@@ -206,11 +212,7 @@ public class EmendationParser {
             }
 
 			if(!strings.isEmpty()) {
-				String segs[] = outPath.split(".xml");
-				outPath = segs[0]+"_"+title+".txt";
-				//outPath = segs[0]+".txt";
-				outPath = outPath.replace("\r", "");
-				outPath = outPath.replace("\n", "");
+				outPath = outPath+"_"+title+".txt";
 				File outFile = new File(outPath);
 				if(!outFile.exists()) {
 					//先创建父目录
@@ -416,7 +418,7 @@ public class EmendationParser {
 			if(rootDir.isDirectory()) {
 				dirList.add(rootDir);
 			} else {
-				parseOneDoc(rootDir, ParseDocType.BACK);
+				parseOneDoc(rootDir, ParseDocType.BACK, getOutputPath(rootDir));
 			}
 		} else {
 			ret = false;
@@ -432,7 +434,7 @@ public class EmendationParser {
 					} else {
 						// T用来标记大正藏
 						if(file.getName().startsWith("T"))
-							parseOneDoc(file, ParseDocType.BACK);
+							parseOneDoc(file, ParseDocType.BACK, getOutputPath(file));
 					}
 				}
 			} else {

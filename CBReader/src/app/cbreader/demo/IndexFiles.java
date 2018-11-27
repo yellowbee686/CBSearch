@@ -57,6 +57,8 @@ public class IndexFiles {
 		if(parseXml) {
 			emendationParser = new EmendationParser(inPath);
 			emendationParser.parseAllDocs();
+			CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
+			generator.buildCatalog();
 		}
 		
 		final File docDir = new File(docsPath);
@@ -135,8 +137,8 @@ public class IndexFiles {
 	 * @throws IOException
 	 *             If there is a low-level I/O error
 	 */
-	public Boolean indexDocs(IndexWriter writer, File file) {
-		Boolean ret = true;
+	public boolean indexDocs(IndexWriter writer, File file) {
+		boolean ret = true;
 		// do not try to index files that cannot be read
 		if (file.canRead()) {
 			if (file.isDirectory()) {
@@ -215,7 +217,7 @@ public class IndexFiles {
 						if(parseReference) {
 							referenceOne(tmp, onlyId);
 						}
-						sb.append(tmp + "\r\n");
+						sb.append(tmp).append("\r\n");
 					}
 					bfReader.close();
 					if(updateIndex) {
@@ -250,9 +252,9 @@ public class IndexFiles {
 	////////////////////////////////////////////生成体例相关//////////////////////////////////////////////////////
 	
 	//TreeMap的comparator是对两个key进行比较
-	private HashMap<String, Reference> references = new HashMap<String, Reference>();
+	private HashMap<String, Reference> references = new HashMap<>();
 	//存放需要人工分析的例子
-	private ArrayList<WrongReferenceItem> wrongItems = new ArrayList<WrongReferenceItem>();
+	private ArrayList<WrongReferenceItem> wrongItems = new ArrayList<>();
 	
 	private static String[] KEY_STOPPER = new String[] {"【", "~", "ヵ", "＊"};
 	private static String KEY_SPLITER = "，"; //分隔一句中的每一项
@@ -328,7 +330,7 @@ public class IndexFiles {
 					references.put(firstKey, ref);
 				}
 			}
-			String copy = new String(secondKey);
+			String copy = secondKey;
 			boolean hasStopper = false;
 			//依次使用停止符进行分析，如果找到，则将前面的作为key
 			for (int j = 0; j < KEY_STOPPER.length; j++) {
@@ -373,12 +375,10 @@ public class IndexFiles {
 		if(!outDir.exists()) {
 			outDir.mkdirs();
 		}
-		
-		Iterator<Reference> iteValue = references.values().iterator();
-		while (iteValue.hasNext()) {
-			Reference reference = iteValue.next();
-			reference.sortSelf();
-		}
+
+        for (Reference reference : references.values()) {
+            reference.sortSelf();
+        }
 		int fileNum = 0;
 		StringBuilder builder = new StringBuilder();
 		//按照笔画顺序输出每一个不同项的体例
@@ -398,30 +398,29 @@ public class IndexFiles {
 		String referenceFileName = "/体例.txt";
 		write2File(indexFileName, "", false); //重置文件
 		write2File(referenceFileName, "", false); //重置文件
-		for(int i=0; i<keyList.size(); i++) {
-			SortStrokeItem item = keyList.get(i);
-		    Reference val = references.get(item.key); 
-		    String str = val.toString();
-		    int itemStroke = item.getFirstStroke();
-		    if(fileNum!=itemStroke) {
-	    		write2File(String.format("/%03d.txt", fileNum), builder.toString(), false);
-	    		if(fileNum==0) {
-		    		indexBuilder.insert(0, "【特殊笔画】\r\n");
-		    		indexBuilder.append("\r\n");
-	    			zeroIndex = indexBuilder.toString();
-	    		} else {
-	    			String strokeStr = String.format("【%d画】\r\n", fileNum);
-		    		indexBuilder.insert(0, strokeStr);
-		    		indexBuilder.append("\r\n");
-	    			write2File(indexFileName, indexBuilder.toString(), true);
-	    		}
-	    		builder.delete(0, builder.length());
-	    		indexBuilder.delete(0, indexBuilder.length());
-	    		fileNum = itemStroke;
-		    }
-		    indexBuilder.append(item.key).append("\r\n");
-		    builder.append(str).append("\r\n");
-		}
+        for (SortStrokeItem item : keyList) {
+            Reference val = references.get(item.key);
+            String str = val.toString();
+            int itemStroke = item.getFirstStroke();
+            if (fileNum != itemStroke) {
+                write2File(String.format("/%03d.txt", fileNum), builder.toString(), false);
+                if (fileNum == 0) {
+                    indexBuilder.insert(0, "【特殊笔画】\r\n");
+                    indexBuilder.append("\r\n");
+                    zeroIndex = indexBuilder.toString();
+                } else {
+                    String strokeStr = String.format("【%d画】\r\n", fileNum);
+                    indexBuilder.insert(0, strokeStr);
+                    indexBuilder.append("\r\n");
+                    write2File(indexFileName, indexBuilder.toString(), true);
+                }
+                builder.delete(0, builder.length());
+                indexBuilder.delete(0, indexBuilder.length());
+                fileNum = itemStroke;
+            }
+            indexBuilder.append(item.key).append("\r\n");
+            builder.append(str).append("\r\n");
+        }
 		//输出最后一部分
 		write2File(String.format("/%03d.txt", fileNum), builder.toString(), false);
 		String strokeStr = String.format("【%d画】\r\n", fileNum);
@@ -435,28 +434,27 @@ public class IndexFiles {
 		fileNum = 0;
 		//输出总和的正文
 		int count = 0;
-		for(int i=0; i<keyList.size(); i++) {
-			SortStrokeItem item = keyList.get(i);
-		    Reference val = references.get(item.key); 
-		    String str = val.toString();
-		    count += val.getRealCount();
-		    int itemStroke = item.getFirstStroke();
-		    if(fileNum!=itemStroke) {
-	    		if(fileNum==0) {
-	    			builder.insert(0, "【特殊笔画】\r\n");
-	    			builder.append("\r\n");
-	    			zeroPart = builder.toString();
-	    		} else {
-	    			strokeStr = String.format("【%d画】\r\n", fileNum);
-	    			builder.insert(0, strokeStr);
-	    			builder.append("\r\n");
-	    			write2File(referenceFileName, builder.toString(), true);
-	    		}
-	    		builder.delete(0, builder.length());
-	    		fileNum = itemStroke;
-		    }
-		    builder.append(str).append("\r\n");
-		}
+        for (SortStrokeItem item : keyList) {
+            Reference val = references.get(item.key);
+            String str = val.toString();
+            count += val.getRealCount();
+            int itemStroke = item.getFirstStroke();
+            if (fileNum != itemStroke) {
+                if (fileNum == 0) {
+                    builder.insert(0, "【特殊笔画】\r\n");
+                    builder.append("\r\n");
+                    zeroPart = builder.toString();
+                } else {
+                    strokeStr = String.format("【%d画】\r\n", fileNum);
+                    builder.insert(0, strokeStr);
+                    builder.append("\r\n");
+                    write2File(referenceFileName, builder.toString(), true);
+                }
+                builder.delete(0, builder.length());
+                fileNum = itemStroke;
+            }
+            builder.append(str).append("\r\n");
+        }
 		System.out.println(String.format("总共条目数=%d 总共词对=%d", keyList.size(), count));
 		strokeStr = String.format("【%d画】\r\n", fileNum);
 		builder.insert(0, strokeStr);

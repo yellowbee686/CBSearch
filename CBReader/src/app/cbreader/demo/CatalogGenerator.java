@@ -3,6 +3,9 @@ package app.cbreader.demo;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
@@ -14,11 +17,53 @@ import java.util.Stack;
 public class CatalogGenerator {
     EmendationParser parser;
 
-    public CatalogGenerator(EmendationParser parser) {
+    public CatalogGenerator(String dirPath, EmendationParser parser) {
+        initFiles(dirPath);
         this.parser = parser;
     }
 
-    private final String basePath = Utils.getBaseDir() + "/catalog";
+    private final String baseOutputPath = Utils.getBaseDir() + "/catalog";
+    // 不构造成map是因为目录中可能不会补全前面的那么多0，因此改成按数字来获取
+    private ArrayList<ArrayList<File>> dataFileList = new ArrayList<>(
+            Collections.nCopies(10000, (ArrayList<File>)Collections.EMPTY_LIST));
+
+    // 将数据目录的先构造成 List<List<File>> 存起来
+    private void initFiles(String dirPath) {
+        File rootDir = new File(dirPath);
+        LinkedList<File> dirList = new LinkedList<>();
+        if (rootDir.exists()) {
+            if(rootDir.isDirectory()) {
+                dirList.add(rootDir);
+            } else {
+                recordOneFile(rootDir);
+            }
+        }
+
+        while (!dirList.isEmpty()) {
+            File dir = dirList.pop();
+            if (dir.exists()) {
+                File dirs[] = dir.listFiles();
+                for (File file : dirs) {
+                    if (file.isDirectory()) {
+                        dirList.add(file);
+                    } else {
+                        // T用来标记大正藏
+                        if(file.getName().startsWith("T"))
+                            recordOneFile(file);
+                    }
+                }
+            }
+        }
+    }
+    // 将一个文件记在dataFileMap中
+    private void recordOneFile(File file) {
+        //原始name是T10n0279_001.xml
+        String[] nameTokens = file.getName().split("_");
+        // 取name的第一段的数字作为index
+        String key = nameTokens[0].substring(nameTokens[0].indexOf("n") + 1);
+        int idx = Integer.parseInt(key);
+        dataFileList.get(idx).add(file);
+    }
 
     public void buildCatalog() {
         BufferedReader reader = Utils.openFile("/dictData/catalog.txt");
@@ -73,10 +118,17 @@ public class CatalogGenerator {
                 paths.push(title);
                 String[] papers = line.split("；");
                 // Stack的foreach依然是顺序遍历
-                mkdir(makeRelativePath(paths));
+                String absolutePath = mkdir(makeRelativePath(paths));
                 for (String paper : papers) {
                     //TODO paper是 T0068 賴吒和羅經 这样的结构，
                     //TODO 需要重构 parseOneDoc 进行拆分 前面获取path和后面写入对应文件的path都需要重构
+                    String[] items = paper.split(" ");
+                    int index = Integer.parseInt(items[0].substring(1));
+                    ArrayList<File> files = dataFileList.get(index);
+                    for (File file : files) {
+                        // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
+                        parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + "_" + items[0]);
+                    }
                 }
                 paths.pop();
                 if (isInner) {
@@ -97,11 +149,13 @@ public class CatalogGenerator {
         return ret;
     }
 
-    private void mkdir(String relativePath) {
-        String path = basePath + relativePath;
+    //创建嵌套文件夹并返回absolutePath
+    private String mkdir(String relativePath) {
+        String path = baseOutputPath + relativePath;
         File dir = new File(path);
         if(!dir.exists()) {
             dir.mkdirs();
         }
+        return path;
     }
 }
