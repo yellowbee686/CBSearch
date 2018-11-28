@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -24,8 +24,7 @@ public class CatalogGenerator {
 
     private final String baseOutputPath = Utils.getBaseDir() + "/catalog";
     // 不构造成map是因为目录中可能不会补全前面的那么多0，因此改成按数字来获取
-    private ArrayList<ArrayList<File>> dataFileList = new ArrayList<>(
-            Collections.nCopies(10000, (ArrayList<File>)Collections.EMPTY_LIST));
+    private HashMap<String, ArrayList<File>> dataFileMap = new HashMap<>();
 
     // 将数据目录的先构造成 List<List<File>> 存起来
     private void initFiles(String dirPath) {
@@ -61,8 +60,22 @@ public class CatalogGenerator {
         String[] nameTokens = file.getName().split("_");
         // 取name的第一段的数字作为index
         String key = nameTokens[0].substring(nameTokens[0].indexOf("n") + 1);
-        int idx = Integer.parseInt(key);
-        dataFileList.get(idx).add(file);
+        key = makeupKey(key);
+        ArrayList<File> fileList = dataFileMap.get(key);
+        if (fileList == null) {
+            fileList = new ArrayList<>();
+            dataFileMap.put(key, fileList);
+        }
+        fileList.add(file);
+    }
+    // 在key前面补0凑足5位，这样存储和找的时候能够对上，因为总共4位数字+最后可能有的a或b
+    // 同时兼容大小写的a b的区别
+    private String makeupKey(String key) {
+        key = key.toLowerCase(); //不管读写时都转小写保持一致
+        while (key.length() < 5) {
+            key = "0" + key;
+        }
+        return key;
     }
 
     public void buildCatalog() {
@@ -120,14 +133,15 @@ public class CatalogGenerator {
                 // Stack的foreach依然是顺序遍历
                 String absolutePath = mkdir(makeRelativePath(paths));
                 for (String paper : papers) {
-                    //TODO paper是 T0068 賴吒和羅經 这样的结构，
-                    //TODO 需要重构 parseOneDoc 进行拆分 前面获取path和后面写入对应文件的path都需要重构
+                    //TODO 等待品级的区分，对需要修改的files范围进行过滤
                     String[] items = paper.split(" ");
-                    int index = Integer.parseInt(items[0].substring(1));
-                    ArrayList<File> files = dataFileList.get(index);
-                    for (File file : files) {
-                        // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
-                        parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + "_" + items[0]);
+                    String key = makeupKey(items[0].substring(1));
+                    ArrayList<File> files = dataFileMap.get(key);
+                    if (files != null) {
+                        for (File file : files) {
+                            // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
+                            parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + "_" + items[0]);
+                        }
                     }
                 }
                 paths.pop();
