@@ -22,7 +22,7 @@ public class CatalogGenerator {
         this.parser = parser;
     }
 
-    private final String baseOutputPath = Utils.getBaseDir() + "/catalog";
+    private final String baseOutputPath = Utils.getBaseDir() + "/catalog/";
     // 不构造成map是因为目录中可能不会补全前面的那么多0，因此改成按数字来获取
     private HashMap<String, ArrayList<File>> dataFileMap = new HashMap<>();
 
@@ -103,7 +103,7 @@ public class CatalogGenerator {
                     }
                     // 如果有序号则过滤掉
                     if (line.contains(".")) {
-                        String[] items = line.split(".");
+                        String[] items = line.split("\\.");
                         if (items.length >= 2) {
                             line = items[1].trim();
                         }
@@ -117,11 +117,12 @@ public class CatalogGenerator {
                 String title;
                 boolean isInner = line.startsWith("【");
                 if (isInner) {
-                    title = line.substring(1, line.indexOf("】")).trim();
+                    int lastIndex = line.indexOf("】");
+                    title = line.substring(1, lastIndex).trim();
                     if (!lastAuthor.isEmpty()) {
                         paths.push(lastAuthor);
                     }
-                    line = line.substring(line.indexOf(authorMark) + 1);
+                    line = line.substring(lastIndex + 1);
                 } else {
                     int partIndex = line.indexOf(authorMark);
                     title = line.substring(0, partIndex).trim();
@@ -133,14 +134,20 @@ public class CatalogGenerator {
                 // Stack的foreach依然是顺序遍历
                 String absolutePath = mkdir(makeRelativePath(paths));
                 for (String paper : papers) {
-                    //TODO 等待品级的区分，对需要修改的files范围进行过滤
-                    String[] items = paper.split(" ");
+                    String[] items = paper.trim().split(" ");
+                    if (items.length <= 0 || items[0].length() <= 0) {
+                        continue;
+                    }
                     String key = makeupKey(items[0].substring(1));
+                    //TODO 等待品级的区分，对需要修改的files范围进行过滤
+                    if (key.contains("(")) {
+                        continue;
+                    }
                     ArrayList<File> files = dataFileMap.get(key);
                     if (files != null) {
                         for (File file : files) {
                             // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
-                            parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + "_" + items[0]);
+                            parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + items[0]);
                         }
                     }
                 }

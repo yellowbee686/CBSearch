@@ -56,7 +56,7 @@ public class IndexFiles {
 		String docsPath = Utils.getBaseDir()+"/notes";
 		if(parseXml) {
 			emendationParser = new EmendationParser(inPath);
-			emendationParser.parseAllDocs();
+			// emendationParser.parseAllDocs();
 			CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
 			generator.buildCatalog();
 		}

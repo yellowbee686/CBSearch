@@ -149,10 +149,11 @@ public class EmendationParser {
             }
         }
     }
-
-    private void parseBodyPart(Element bodyElement, List<String> strings) {
-        List<Element> items = bodyElement.elements();
+	// dfs的找所有p都输出出来
+    private void dfsElementByName(Element element, List<String> strings) {
+        List<Element> items = element.elements();
 	    for (Element item : items) {
+	    	dfsElementByName(item, strings);
 	        String name = item.getName();
             if ("p".equals(name)) {
                 strings.add(item.getTextTrim());
@@ -185,7 +186,7 @@ public class EmendationParser {
 		Boolean ret = true;
 		SAXReader reader = new SAXReader();
 		ArrayList<String> strings = new ArrayList<>(); //存放异文结果
-        System.out.println(String.format("start parse %s", outPath));
+        //System.out.println(String.format("start parse %s", outPath));
 		charDecl.clear();
 		try {
 			Document document = reader.read(doc);
@@ -197,6 +198,7 @@ public class EmendationParser {
 			Element textElement = root.element("text");
 			Element bodyElement = textElement.element("body");
 			String title = getTitle(bodyElement);
+            title = title.replace("\r", "").replace("\n", "");
 
 			if (parseType == ParseDocType.BACK) {
 			    parseBackPart(textElement, strings, fileName);
@@ -208,11 +210,12 @@ public class EmendationParser {
                 TODO 需要复查建索引的过程，索引似乎没考虑这种字，如果不做替换的话是搜索不出的
                 */
                 strings.add(title); //把title放在最前
-                parseBodyPart(bodyElement, strings);
+                dfsElementByName(bodyElement, strings);
             }
 
 			if(!strings.isEmpty()) {
 				outPath = outPath+"_"+title+".txt";
+                System.out.println(String.format("start write %s", outPath));
 				File outFile = new File(outPath);
 				if(!outFile.exists()) {
 					//先创建父目录
