@@ -138,16 +138,23 @@ public class CatalogGenerator {
                     if (items.length <= 0 || items[0].length() <= 0) {
                         continue;
                     }
-                    String key = makeupKey(items[0].substring(1));
-                    //TODO 等待品级的区分，对需要修改的files范围进行过滤
-                    if (key.contains("(")) {
-                        continue;
+                    String key;
+                    String pinId = ""; //品级Id，填了这个就需要对文件逐个过滤
+                    int pinIndex = items[0].indexOf("(");
+                    if (pinIndex >= 0) {
+                        key = makeupKey(items[0].substring(1, pinIndex));
+                        pinId = items[0].substring(pinIndex+1, items[0].indexOf(")"));
+                    } else {
+                        key = makeupKey(items[0].substring(1));
                     }
+
                     ArrayList<File> files = dataFileMap.get(key);
                     if (files != null) {
                         for (File file : files) {
-                            // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
-                            parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + items[0]);
+                            if (checkByJuanId(file, pinId)) {
+                                // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
+                                parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + items[0], pinId);
+                            }
                         }
                     }
                 }
@@ -159,6 +166,25 @@ public class CatalogGenerator {
             reader.close();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private boolean checkByJuanId(File file, String juanId) {
+        if (!juanId.contains("j")) {
+            return true;
+        }
+        String fileName = file.getName();
+        int startIndex = fileName.indexOf("_");
+        int endIndex = fileName.indexOf(".");
+        int fileNum = Integer.parseInt(fileName.substring(startIndex + 1, endIndex));
+        int idx = juanId.indexOf("-");
+        if (idx >= 0) {
+            int lowBound = Integer.parseInt(juanId.substring(1, idx));
+            int upBound = Integer.parseInt(juanId.substring(idx + 2));
+            return fileNum >= lowBound && fileNum <= upBound;
+        } else {
+            int id = Integer.parseInt(juanId.substring(1)); //剔除j 转为int好比较
+            return id == fileNum;
         }
     }
 

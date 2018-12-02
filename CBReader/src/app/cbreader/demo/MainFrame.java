@@ -68,7 +68,7 @@ public class MainFrame extends JFrame implements ActionListener {
 			if (ret == JFileChooser.APPROVE_OPTION) {
 				String dirPath = dirChooser.getSelectedFile().getAbsolutePath();
 				chooseField.setText(dirPath);
-				IndexFiles indexer = new IndexFiles(dirPath, true, true, true);
+				IndexFiles indexer = new IndexFiles(dirPath, true, false, false);
 				Boolean idxFlag = indexer.buildIndex();
 				if (idxFlag) {
 					JOptionPane.showMessageDialog(this, "建立索引成功");

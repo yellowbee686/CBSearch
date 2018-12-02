@@ -156,7 +156,14 @@ public class EmendationParser {
 	    	dfsElementByName(item, strings);
 	        String name = item.getName();
             if ("p".equals(name)) {
-                strings.add(item.getTextTrim());
+            	String text = item.getTextTrim();
+            	text = text.replace(" ", "");
+            	// 暂时先不导出注释
+//            	String note = item.elementText("note");
+//            	if (note != null) {
+//            		text += note;
+//				}
+                strings.add(text);
             }
             // 列表项的单独成行
             if ("lg".equals(name)) {
@@ -169,6 +176,48 @@ public class EmendationParser {
             }
         }
     }
+
+    private boolean checkByPinId(Element root, String pinId) {
+		// j表示按卷区分，在CatalogGenerator中判断过了
+		if (pinId.isEmpty() || pinId.contains("j")) {
+			return true;
+		}
+
+		LinkedList<Element> items = new LinkedList<>();
+		items.push(root);
+		boolean ret = false;
+		// 因为每个品的开头会有上一品的错误标记，因此要BFS检查到最后一品才可以
+		while (!items.isEmpty()) {
+			Element item = items.pop();
+			if (item.getName().equals("mulu")) {
+				Attribute levelAttr = item.attribute("level");
+				if (levelAttr != null && levelAttr.getValue().equals("1")) {
+					String title = item.getTextTrim();
+					int partIndex = title.indexOf(" ");
+					if (partIndex >= 0) {
+						// pinId 可能是一个数字 也可能是2-30这样一个范围
+						String id = title.substring(0, partIndex);
+						int parseIndex = pinId.indexOf("-");
+						if (parseIndex >= 0) {
+							int fileId = Integer.parseInt(id);
+							int lowBound = Integer.parseInt(pinId.substring(0, parseIndex));
+							int upBound = Integer.parseInt(pinId.substring(parseIndex + 1));
+							ret = fileId >= lowBound && fileId <= upBound;
+						} else {
+							ret = id.equals(pinId);
+						}
+					} else {
+						System.out.println("wrong pin=" + title);
+						ret = false;
+					}
+				}
+			}
+			List<Element> children = item.elements();
+			items.addAll(children);
+		}
+		return ret;
+	}
+
     // 拼接要输出的目录path，输入是解析的源文件file
     private String getOutputPath(File doc) {
         String midPath = doc.getAbsolutePath().replace(dirPath, "");
@@ -182,7 +231,8 @@ public class EmendationParser {
     // parseBack表示解析异文并输出到文件中
     // parseBody表示解析正文到文件中
     // 为了适配两边的需求，已经改成无状态的了
-	public Boolean parseOneDoc(File doc, ParseDocType parseType, String outPath) {
+	// 在解析正文模式下，需要符合的pinId才进行解析
+	public Boolean parseOneDoc(File doc, ParseDocType parseType, String outPath, String pinId) {
 		Boolean ret = true;
 		SAXReader reader = new SAXReader();
 		ArrayList<String> strings = new ArrayList<>(); //存放异文结果
@@ -197,6 +247,10 @@ public class EmendationParser {
 			parseDict(dictElement);
 			Element textElement = root.element("text");
 			Element bodyElement = textElement.element("body");
+			// 如果品级不对就不再解析
+			if (!checkByPinId(bodyElement, pinId)) {
+				return false;
+			}
 			String title = getTitle(bodyElement);
             title = title.replace("\r", "").replace("\n", "");
 
@@ -214,7 +268,8 @@ public class EmendationParser {
             }
 
 			if(!strings.isEmpty()) {
-				outPath = outPath+"_"+title+".txt";
+				String juanId = fileName.substring(fileName.indexOf("_"));
+				outPath = outPath + juanId + "_" + title + ".txt";
                 System.out.println(String.format("start write %s", outPath));
 				File outFile = new File(outPath);
 				if(!outFile.exists()) {
@@ -421,7 +476,7 @@ public class EmendationParser {
 			if(rootDir.isDirectory()) {
 				dirList.add(rootDir);
 			} else {
-				parseOneDoc(rootDir, ParseDocType.BACK, getOutputPath(rootDir));
+				parseOneDoc(rootDir, ParseDocType.BACK, getOutputPath(rootDir), "");
 			}
 		} else {
 			ret = false;
@@ -437,7 +492,7 @@ public class EmendationParser {
 					} else {
 						// T用来标记大正藏
 						if(file.getName().startsWith("T"))
-							parseOneDoc(file, ParseDocType.BACK, getOutputPath(file));
+							parseOneDoc(file, ParseDocType.BACK, getOutputPath(file), "");
 					}
 				}
 			} else {
