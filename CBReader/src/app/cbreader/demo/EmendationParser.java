@@ -207,7 +207,7 @@ public class EmendationParser {
 							ret = id.equals(pinId);
 						}
 					} else {
-						System.out.println("wrong pin=" + title);
+						//System.out.println("wrong pin=" + title);
 						ret = false;
 					}
 				}
@@ -270,7 +270,7 @@ public class EmendationParser {
 			if(!strings.isEmpty()) {
 				String juanId = fileName.substring(fileName.indexOf("_"));
 				outPath = outPath + juanId + "_" + title + ".txt";
-                System.out.println(String.format("start write %s", outPath));
+                //System.out.println(String.format("start write %s", outPath));
 				File outFile = new File(outPath);
 				if(!outFile.exists()) {
 					//先创建父目录

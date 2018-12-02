@@ -135,7 +135,10 @@ public class CatalogGenerator {
                 String absolutePath = mkdir(makeRelativePath(paths));
                 for (String paper : papers) {
                     String[] items = paper.trim().split(" ");
-                    if (items.length <= 0 || items[0].length() <= 0) {
+                    if (items.length <= 1 || items[0].length() <= 0) {
+                        if (!paper.isEmpty()) {
+                            System.out.println("wrong key=" + paper);
+                        }
                         continue;
                     }
                     String key;
