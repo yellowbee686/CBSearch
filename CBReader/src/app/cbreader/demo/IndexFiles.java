@@ -87,7 +87,7 @@ public class IndexFiles {
 			
 			IndexWriter writer = new IndexWriter(dir, iwc);
 			ret = indexDocs(writer, docDir);
-
+			System.out.println("words in catalog=" + inCatalogCount);
 			// NOTE: if you want to maximize search performance,
 			// you can optionally call forceMerge here. This can be
 			// a terribly costly operation, so generally it's only
@@ -158,8 +158,7 @@ public class IndexFiles {
 					// at least on windows, some temporary files raise this
 					// exception with an "access denied" message
 					// checking if the file can be read doesn't help
-					ret = false;
-					return ret;
+					return false;
 				}
 
 				try {
@@ -281,7 +280,8 @@ public class IndexFiles {
 		}
 		return key.trim();
 	}
-	
+
+	private int inCatalogCount = 0; //统计有多少是属于catalog的
 	
 	private void referenceOne(String sample, String fileName) {
 		String[] arr = sample.split(KEY_SPLITER);
@@ -291,6 +291,7 @@ public class IndexFiles {
 //			wrongItems.add(new WrongReferenceItem(sample, fileName));
 //			return;
 //		}
+		int catalogCount = 0; //统计这次有多少条异文
 		String firstKey = "", secondKey = "";
 		for (int i = 0; i < arr.length; i++) {
 			String remaining = arr[i];
@@ -351,6 +352,7 @@ public class IndexFiles {
 			
 			Reference ref = references.get(firstKey);
 			ref.add(secondKey, fileName);
+			catalogCount++;
 			// 只有相等的情况，才需要以异文作为主key
 			if(isEqual) {
 				if(!references.containsKey(secondKey)) {
@@ -361,12 +363,14 @@ public class IndexFiles {
 				ref2.addBackKey(firstKey);
 			}
 		}
+
+		if (emendationParser.isInCatalog(fileName)) {
+			inCatalogCount += catalogCount;
+		}
 	}
 
 	private String referenceRootPath;
-	class SortItem{
-		
-	}
+
 	//输出整个体例
 	private void outputReferences() {
 		//操作文件
@@ -392,7 +396,6 @@ public class IndexFiles {
 		keyList.sort(SortStrokeItem::compareTo);
 		
 		StringBuilder indexBuilder = new StringBuilder(); //存放索引
-		StringBuilder indexPartBuilder = new StringBuilder(); //存放索引的一部分
 		String zeroPart="", zeroIndex="";
 		String indexFileName = "/目录.txt";
 		String referenceFileName = "/体例.txt";
