@@ -87,6 +87,7 @@ public class CatalogGenerator {
         String paperMark = "T"; //经文的标记
         String authorMark = "："; //作者的标记
         String lastAuthor = ""; //用于记录上一个作者路径，碰到【】时需要同时将作者入栈
+        int nCount = 0; //Txxxnyyy中目录里涉及的n的数量统计
         try {
             while(true) {
                 String line = reader.readLine();
@@ -150,7 +151,7 @@ public class CatalogGenerator {
                     } else {
                         key = makeupKey(items[0].substring(1));
                     }
-
+                    nCount++;
                     ArrayList<File> files = dataFileMap.get(key);
                     if (files != null) {
                         for (File file : files) {
@@ -167,6 +168,7 @@ public class CatalogGenerator {
                 }
             }
             reader.close();
+            System.out.println("经卷数：" + nCount);
         } catch (IOException e) {
             e.printStackTrace();
         }
