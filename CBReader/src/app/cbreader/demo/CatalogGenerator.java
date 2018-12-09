@@ -15,7 +15,7 @@ import java.util.Stack;
  * 解析一个目录文件，并按照该文件生成层级文件夹，并导出经文内容到对应的文本文件中
  */
 public class CatalogGenerator {
-    EmendationParser parser;
+    protected EmendationParser parser;
 
     public CatalogGenerator(String dirPath, EmendationParser parser) {
         initFiles(dirPath);
@@ -24,7 +24,7 @@ public class CatalogGenerator {
 
     private final String baseOutputPath = Utils.getBaseDir() + "/catalog/";
     // 不构造成map是因为目录中可能不会补全前面的那么多0，因此改成按数字来获取
-    private HashMap<String, ArrayList<File>> dataFileMap = new HashMap<>();
+    protected HashMap<String, ArrayList<File>> dataFileMap = new HashMap<>();
 
     // 将数据目录的先构造成 List<List<File>> 存起来
     private void initFiles(String dirPath) {
@@ -41,14 +41,16 @@ public class CatalogGenerator {
         while (!dirList.isEmpty()) {
             File dir = dirList.pop();
             if (dir.exists()) {
-                File dirs[] = dir.listFiles();
-                for (File file : dirs) {
-                    if (file.isDirectory()) {
-                        dirList.add(file);
-                    } else {
-                        // T用来标记大正藏
-                        if(file.getName().startsWith("T"))
-                            recordOneFile(file);
+                File[] dirs = dir.listFiles();
+                if (dirs != null) {
+                    for (File file : dirs) {
+                        if (file.isDirectory()) {
+                            dirList.add(file);
+                        } else {
+                            // T用来标记大正藏
+                            if(file.getName().startsWith("T"))
+                                recordOneFile(file);
+                        }
                     }
                 }
             }
@@ -61,11 +63,7 @@ public class CatalogGenerator {
         // 取name的第一段的数字作为index
         String key = nameTokens[0].substring(nameTokens[0].indexOf("n") + 1);
         key = makeupKey(key);
-        ArrayList<File> fileList = dataFileMap.get(key);
-        if (fileList == null) {
-            fileList = new ArrayList<>();
-            dataFileMap.put(key, fileList);
-        }
+        ArrayList<File> fileList = dataFileMap.computeIfAbsent(key, k -> new ArrayList<>());
         fileList.add(file);
     }
     // 在key前面补0凑足5位，这样存储和找的时候能够对上，因为总共4位数字+最后可能有的a或b
@@ -157,7 +155,8 @@ public class CatalogGenerator {
                         for (File file : files) {
                             if (checkByJuanId(file, pinId)) {
                                 // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
-                                parser.parseOneDoc(file, ParseDocType.BODY, absolutePath + items[0], pinId);
+                                List<String> texts = parser.parseOneDoc(file, ParseDocType.BODY, pinId);
+                                parser.write2File(file, texts, absolutePath + items[0], true);
                             }
                         }
                     }

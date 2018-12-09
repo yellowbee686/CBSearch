@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import com.sun.istack.internal.Nullable;
 
 public class Utils {
-	public static String CBETA_MARK = " @cbeta"; //用来标记某一条是cbeta的校注，用于在最后确定格式用
-	public static String LACK_WORD = "（缺字）";
+	public static final String CBETA_MARK = " @cbeta"; //用来标记某一条是cbeta的校注，用于在最后确定格式用
+	public static final String LACK_WORD = "（缺字）";
+	public static final String NOTE_PATH = "/notes";
+	public static final String FULLTEXT_PATH = "/fulltext";
 	//有一些符号标记的key应该和不带标记的排在一起  ぃ标记为其他校勘记中得来的校注
 	private static String OPTIONAL_MARK[] = {"？", "ぃ", "ィ"}; 
 	public static boolean endsWithOptionalMark(String str) {

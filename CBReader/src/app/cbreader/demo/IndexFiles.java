@@ -42,23 +42,35 @@ public class IndexFiles {
 	private boolean parseXml;
 	private boolean parseReference;
 	private boolean updateIndex;
-	public IndexFiles(String chooseDir, boolean parseXml, boolean parseReference, boolean updateIndex) {
+	private boolean writeFull;
+	private boolean buildCatalog;
+	public IndexFiles(String chooseDir, boolean parseXml, boolean writeFull, boolean buildCatalog, boolean parseReference, boolean updateIndex) {
 		inPath = chooseDir;
 		this.parseXml = parseXml;
 		this.parseReference = parseReference;
 		this.updateIndex = updateIndex;
+		this.writeFull = writeFull;
+		this.buildCatalog = buildCatalog;
 	}
 	EmendationParser emendationParser = null;
 	public Boolean buildIndex() {
 		Boolean ret;
 		String indexPath = "index";
 		//System.getProperty("user.dir")返回执行java程序的目录
-		String docsPath = Utils.getBaseDir()+"/notes";
+		String docsPath = Utils.getBaseDir();
 		if(parseXml) {
-			emendationParser = new EmendationParser(inPath);
-			// emendationParser.parseAllDocs();
-			CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
-			generator.buildCatalog();
+			if (writeFull) {
+				emendationParser = new FullTextGenerator(inPath);
+				docsPath += Utils.FULLTEXT_PATH;
+			} else {
+				emendationParser = new EmendationParser(inPath);
+				docsPath += Utils.NOTE_PATH;
+			}
+			emendationParser.parseAllDocs();
+			if (buildCatalog) {
+				CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
+				generator.buildCatalog();
+			}
 		}
 		
 		final File docDir = new File(docsPath);

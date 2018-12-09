@@ -18,12 +18,12 @@ import java.util.List;
 
 //解析CBeta文件，输出自己分析后的文本到/notes目录下
 public class EmendationParser {
-    private String dirPath; //源目录
-    private String outDirPath; //写入目录
+    protected String dirPath; //源目录
+    protected String outDirPath; //写入目录
 
     public EmendationParser(String path) {
         dirPath = path;
-        outDirPath = Utils.getBaseDir()+"/notes";
+        outDirPath = Utils.getBaseDir()+Utils.NOTE_PATH;
         File outDir = new File(outDirPath);
         if(!outDir.exists()) {
             outDir.mkdirs();
@@ -124,13 +124,13 @@ public class EmendationParser {
             Attribute attr = element.attribute("type");
             // 先解析cbeta校注，并且记录下来，遇到相同的taisho时就不用解析了
             if(origAttrValue.equals(attr.getValue()) || modAttrValue.equals(attr.getValue())) {
-                Boolean isTaisho = origAttrValue.equals(attr.getValue());
+                boolean isTaisho = origAttrValue.equals(attr.getValue());
                 List<Element> notes = element.element("p").elements();
                 for (Element ele : notes) {
                     //判断特殊=号
                     if("note".equals(ele.getName())) {
                         String id = ele.attributeValue("n");
-                        if(!isTaisho || isTaisho && !noteKeys.contains(id)) {
+                        if(!isTaisho || !noteKeys.contains(id)) {
                             //每一条内部可能有多个"g" 含有多个引用  也可能是多个"figure"
                             String anString = parseOneNote(ele, fileName, isTaisho);
                             anString = removeXmlAfterParse(anString);
@@ -219,7 +219,7 @@ public class EmendationParser {
     }
 
     // 拼接要输出的目录path，输入是解析的源文件file
-    private String getOutputPath(File doc) {
+    protected String getOutputPath(File doc) {
         String midPath = doc.getAbsolutePath().replace(dirPath, "");
         String outPath = outDirPath + midPath;
         outPath = outPath.replace("\r", "").replace("\n", "");
@@ -239,10 +239,10 @@ public class EmendationParser {
     // parseBody表示解析正文到文件中
     // 为了适配两边的需求，已经改成无状态的了
     // 在解析正文模式下，需要符合的pinId才进行解析
-    public Boolean parseOneDoc(File doc, ParseDocType parseType, String outPath, String pinId) {
-        Boolean ret = true;
+    // 返回解析到的所有内容
+    public List<String> parseOneDoc(File doc, ParseDocType parseType, String pinId) {
         SAXReader reader = new SAXReader();
-        ArrayList<String> strings = new ArrayList<>(); //存放异文结果
+        List<String> strings = new ArrayList<>(); //存放异文结果
         //System.out.println(String.format("start parse %s", outPath));
         charDecl.clear();
         try {
@@ -256,7 +256,7 @@ public class EmendationParser {
             Element bodyElement = textElement.element("body");
             // 如果品级不对就不再解析
             if (!checkByPinId(bodyElement, pinId)) {
-                return false;
+                return strings;
             }
 
             if (parseType == ParseDocType.BODY) {
@@ -278,8 +278,21 @@ public class EmendationParser {
                 strings.add(title); //把title放在最前
                 dfsElementByName(bodyElement, strings);
             }
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+        return strings;
+    }
 
+    public void write2File(File doc, List<String> strings, String outPath, boolean withTitle) {
+        try {
             if(!strings.isEmpty()) {
+                String title = strings.get(0); //title放在strings最前
+                if (!withTitle) {
+                    strings.remove(0);
+                }
+                String fileName = doc.getName();
+                fileName = fileName.substring(0, fileName.length()-4); //去除扩展名
                 String juanId = fileName.substring(fileName.indexOf("_"));
                 outPath = outPath + juanId + "_" + title + ".txt";
                 //System.out.println(String.format("start write %s", outPath));
@@ -291,7 +304,7 @@ public class EmendationParser {
                 }
                 //要指定utf-8编码
                 PrintWriter pw = new PrintWriter(outFile, StandardCharsets.UTF_8.toString());
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 for (String str : strings) {
                     sb.append(str).append("\r\n");
                 }
@@ -299,13 +312,9 @@ public class EmendationParser {
                 pw.flush();
                 pw.close();
             }
-        } catch (DocumentException e) {
-            e.printStackTrace();
-            ret = false;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return ret;
     }
 
 
@@ -480,6 +489,12 @@ public class EmendationParser {
         return builder.toString();
     }
 
+    protected void processOneFile(File file) {
+        List<String> texts = parseOneDoc(file, ParseDocType.BACK, "");
+        write2File(file, texts, getOutputPath(file), false);
+    }
+
+    // 遍历所有文件
     public Boolean parseAllDocs() {
         Boolean ret = true;
         File rootDir = new File(dirPath);
@@ -488,7 +503,7 @@ public class EmendationParser {
             if(rootDir.isDirectory()) {
                 dirList.add(rootDir);
             } else {
-                parseOneDoc(rootDir, ParseDocType.BACK, getOutputPath(rootDir), "");
+                processOneFile(rootDir);
             }
         } else {
             ret = false;
@@ -497,14 +512,17 @@ public class EmendationParser {
         while (!dirList.isEmpty()) {
             File dir = dirList.pop();
             if (dir.exists()) {
-                File dirs[] = dir.listFiles();
-                for (File file : dirs) {
-                    if (file.isDirectory()) {
-                        dirList.add(file);
-                    } else {
-                        // T用来标记大正藏
-                        if(file.getName().startsWith("T"))
-                            parseOneDoc(file, ParseDocType.BACK, getOutputPath(file), "");
+                File[] dirs = dir.listFiles();
+                if (dirs != null) {
+                    for (File file : dirs) {
+                        if (file.isDirectory()) {
+                            dirList.add(file);
+                        } else {
+                            // T用来标记大正藏
+                            if(file.getName().startsWith("T")) {
+                                processOneFile(file);
+                            }
+                        }
                     }
                 }
             } else {
