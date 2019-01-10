@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -74,6 +76,13 @@ public class CatalogGenerator {
             key = "0" + key;
         }
         return key;
+    }
+
+    private Set<String> matchFileNames = new HashSet<>();
+
+    // 校验是否属于catalog的范围
+    public boolean isFileMatch(String fileName) {
+        return matchFileNames.contains(fileName);
     }
 
     public void buildCatalog() {
@@ -156,7 +165,11 @@ public class CatalogGenerator {
                             if (checkByJuanId(file, pinId)) {
                                 // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
                                 List<String> texts = parser.parseOneDoc(file, ParseDocType.BODY, pinId);
-                                parser.write2File(file, texts, absolutePath + items[0], true);
+                                if (!texts.isEmpty()) {
+                                    parser.write2File(file, texts, absolutePath + items[0], true);
+                                    String[] nameArray = file.getName().split("\\.");
+                                    matchFileNames.add(nameArray[0]);
+                                }
                             }
                         }
                     }

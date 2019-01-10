@@ -26,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
@@ -44,6 +43,7 @@ public class IndexFiles {
 	private boolean updateIndex;
 	private boolean writeFull;
 	private boolean buildCatalog;
+	CatalogGenerator catalogGenerator;
 	public IndexFiles(String chooseDir, boolean parseXml, boolean writeFull, boolean buildCatalog, boolean parseReference, boolean updateIndex) {
 		inPath = chooseDir;
 		this.parseXml = parseXml;
@@ -68,8 +68,8 @@ public class IndexFiles {
 			}
 			//emendationParser.parseAllDocs();
 			if (buildCatalog) {
-				CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
-				generator.buildCatalog();
+				catalogGenerator = new CatalogGenerator(inPath, emendationParser);
+				catalogGenerator.buildCatalog();
 			}
 		}
 		
@@ -111,8 +111,7 @@ public class IndexFiles {
 			writer.close();
 
 			Date end = new Date();
-			System.out.println(end.getTime() - start.getTime()
-					+ " total milliseconds");
+			System.out.println((end.getTime() - start.getTime()) + " total milliseconds");
 			
 			if(parseReference) {
 				ReadStrokeData(); 
@@ -226,7 +225,9 @@ public class IndexFiles {
 						if (null == tmp)
 							break;
 						if(parseReference) {
-							referenceOne(tmp, onlyId);
+							if (!buildCatalog || catalogGenerator.isFileMatch(onlyId)) {
+								referenceOne(tmp, onlyId);
+							}
 						}
 						sb.append(tmp).append("\r\n");
 					}
