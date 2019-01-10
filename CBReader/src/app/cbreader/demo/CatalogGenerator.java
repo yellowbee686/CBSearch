@@ -77,7 +77,7 @@ public class CatalogGenerator {
     }
 
     public void buildCatalog() {
-        BufferedReader reader = Utils.openFile("/dictData/catalog.txt");
+        BufferedReader reader = Utils.openFile("/dictData/catalog_2.txt");
         if(reader == null) {
             return;
         }

@@ -66,7 +66,7 @@ public class IndexFiles {
 				emendationParser = new EmendationParser(inPath);
 				docsPath += Utils.NOTE_PATH;
 			}
-			emendationParser.parseAllDocs();
+			//emendationParser.parseAllDocs();
 			if (buildCatalog) {
 				CatalogGenerator generator = new CatalogGenerator(inPath, emendationParser);
 				generator.buildCatalog();

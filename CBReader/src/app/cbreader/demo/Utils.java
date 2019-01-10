@@ -104,8 +104,10 @@ public class Utils {
 		String[] parts = str.split(ADD_SPLITER);
 		if(parts.length<2)
 			return false;
-		for (int i = 0; i < parts.length-1; i++) {
-			if(parts[i+1].startsWith("（")) { //如果是拼字 +后面是半角( 而非全角（
+		for (int i = 0; i < parts.length; i++) {
+			//如果是拼字 +后面是半角( 而非全角（
+			// 对应的不在括号中的才是key
+			if(!parts[i].contains("（")) {
 				outs[0] = parts[i];
 				return true;
 			}
