@@ -24,8 +24,10 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
@@ -41,9 +43,11 @@ public class IndexFiles {
 	private boolean parseXml;
 	private boolean parseReference;
 	private boolean updateIndex;
-	private boolean writeFull;
+	private boolean writeFull; //兼容全文和异文检索
 	private boolean buildCatalog;
 	CatalogGenerator catalogGenerator;
+	EmendationParser emendationParser = null;
+
 	public IndexFiles(String chooseDir, boolean parseXml, boolean writeFull, boolean buildCatalog, boolean parseReference, boolean updateIndex) {
 		inPath = chooseDir;
 		this.parseXml = parseXml;
@@ -52,19 +56,13 @@ public class IndexFiles {
 		this.writeFull = writeFull;
 		this.buildCatalog = buildCatalog;
 	}
-	EmendationParser emendationParser = null;
-	public Boolean buildIndex() {
-		Boolean ret;
-		String indexPath = "index";
-		//System.getProperty("user.dir")返回执行java程序的目录
-		String docsPath = Utils.getBaseDir();
+
+	public void prepareIndex() {
 		if(parseXml) {
 			if (writeFull) {
 				emendationParser = new FullTextGenerator(inPath);
-				docsPath += Utils.FULLTEXT_PATH;
 			} else {
 				emendationParser = new EmendationParser(inPath);
-				docsPath += Utils.NOTE_PATH;
 			}
 			//emendationParser.parseAllDocs();
 			if (buildCatalog) {
@@ -72,7 +70,16 @@ public class IndexFiles {
 				catalogGenerator.buildCatalog();
 			}
 		}
-		
+	}
+
+	public List<File> getDefaultDocDirs() {
+		String docsPath = Utils.getBaseDir();
+		if (writeFull) {
+			docsPath += Utils.FULLTEXT_PATH;
+		} else {
+			docsPath += Utils.NOTE_PATH;
+		}
+
 		final File docDir = new File(docsPath);
 		if (!docDir.exists() || !docDir.canRead()) {
 			System.out
@@ -81,6 +88,14 @@ public class IndexFiles {
 							+ "' does not exist or is not readable, please check the path");
 			System.exit(1);
 		}
+		return Collections.singletonList(docDir);
+	}
+
+	public boolean buildIndex(List<File> docDirs) {
+		boolean ret = true;
+		//System.getProperty("user.dir")返回执行java程序的目录
+
+		String indexPath = Utils.getIndexPath(writeFull);
 
 		Date start = new Date();
 		try {
@@ -93,12 +108,13 @@ public class IndexFiles {
 			IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_48,
 					analyzer);
 
-			
 			// Add new documents to an existing index:
 			iwc.setOpenMode(OpenMode.CREATE);
 			
 			IndexWriter writer = new IndexWriter(dir, iwc);
-			ret = indexDocs(writer, docDir);
+			for (File docDir : docDirs) {
+				ret = ret && indexDocs(writer, docDir);
+			}
 			System.out.println("words in catalog=" + inCatalogCount);
 			// NOTE: if you want to maximize search performance,
 			// you can optionally call forceMerge here. This can be

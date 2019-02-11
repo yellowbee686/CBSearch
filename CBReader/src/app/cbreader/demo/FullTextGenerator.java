@@ -3,10 +3,8 @@ package app.cbreader.demo;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author huangjunyi
@@ -24,10 +22,12 @@ public class FullTextGenerator extends EmendationParser {
     protected void processOneFile(File file) {
         List<String> texts = parseOneDoc(file, ParseDocType.BODY, ""); //正文
         List<String> emendations = parseOneDoc(file, ParseDocType.BACK, ""); //异文
-        Map<String, String> pairs = parseEmendations(emendations);
-        List<String> fullTexts = new ArrayList<>(texts); //先放正文
+        Map<String, String> pairs = parseEmendations(emendations); // {ori->异文}
+        List<String> fullTexts = new ArrayList<>(); //先放正文
+        // 将异文对应的整句也添加到文件中，就接在原来的那句后面
         for (String text : texts) {
             String copied = text;
+            fullTexts.add(text);
             List<String> used = new ArrayList<>();
             for (Map.Entry<String, String> entry : pairs.entrySet()) {
                 String ori = entry.getKey();
@@ -37,9 +37,11 @@ public class FullTextGenerator extends EmendationParser {
                     used.add(ori);
                 }
             }
-            fullTexts.add(copied);
-            for (String key : used) {
-                pairs.remove(key);
+            if (!used.isEmpty()) {
+                fullTexts.add(copied);
+                for (String key : used) {
+                    pairs.remove(key);
+                }
             }
         }
         write2File(file, fullTexts, getOutputPath(file), true);

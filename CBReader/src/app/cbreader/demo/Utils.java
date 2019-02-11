@@ -127,4 +127,12 @@ public class Utils {
 		}
 		return false;
 	}
+
+	public static String getIndexPath(boolean writeFull) {
+		if (writeFull) {
+			return "index/normal";
+		} else {
+			return "index/full";
+		}
+	}
 }
