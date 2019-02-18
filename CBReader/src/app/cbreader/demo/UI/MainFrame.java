@@ -1,4 +1,4 @@
-package app.cbreader.demo;
+package app.cbreader.demo.UI;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
@@ -10,6 +10,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.*;
+
+import app.cbreader.demo.IndexFiles;
+import app.cbreader.demo.SearchFiles;
+import app.cbreader.demo.Utils;
 
 public class MainFrame extends JFrame implements ActionListener {
     private JButton chooseBtn;
