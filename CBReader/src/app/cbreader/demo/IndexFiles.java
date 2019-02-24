@@ -31,6 +31,9 @@ import java.util.List;
 
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
+import app.cbreader.demo.model.SortStrokeItem;
+import app.cbreader.demo.model.WrongReferenceItem;
+
 
 /**
  * Index all text files under a directory.
@@ -64,7 +67,7 @@ public class IndexFiles {
 			} else {
 				emendationParser = new EmendationParser(inPath);
 			}
-			//emendationParser.parseAllDocs();
+			emendationParser.parseAllDocs();
 			if (buildCatalog) {
 				catalogGenerator = new CatalogGenerator(inPath, emendationParser);
 				catalogGenerator.buildCatalog();

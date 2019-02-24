@@ -8,9 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -26,6 +24,8 @@ import org.apache.lucene.util.Version;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TotalHitCountCollector;
 import org.wltea.analyzer.lucene.IKAnalyzer;
+
+import app.cbreader.demo.model.SearchResult;
 
 /** Simple command-line based search demo. */
 public class SearchFiles {
@@ -141,14 +141,14 @@ public class SearchFiles {
 //		reader.close();
 //	}
 
-    public boolean doSearch() {
+    public SearchResult doSearch() {
         boolean ret;
+        SearchResult result = null;
         String index = Utils.getIndexPath(writeFull);
         String field = "contents";
         IndexReader reader;
         try {
-            reader = DirectoryReader.open(FSDirectory.open(new File(
-                    index)));
+            reader = DirectoryReader.open(FSDirectory.open(new File(index)));
             IndexSearcher searcher = new IndexSearcher(reader);
             // :Post-Release-Update-Version.LUCENE_XY:
             // Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_48);
@@ -160,8 +160,10 @@ public class SearchFiles {
             String pureString = queryString.trim();
             Query query = parser.parse(pureString);
             System.out.println("Searching for: " + query.toString());
-            Map<String, List<String>> searchResults = doPagingSearch(searcher, query, pureString);
-            ret = save2File(pureString, searchResults);
+            result = doPagingSearch(searcher, query, pureString);
+
+            // 暂时都显示在列表中
+            // ret = save2File(pureString, searchResult);
 
 
             //使用term进行整个词的搜索是无效的，因为建立索引时也是按照分词来的，并没有整个词
@@ -175,7 +177,7 @@ public class SearchFiles {
             ret = false;
         }
 
-        return ret;
+        return result;
     }
     /**
      * This demonstrates a typical paging search scenario, where the search
@@ -188,11 +190,12 @@ public class SearchFiles {
      * collected.
      *
      */
-    public Map<String, List<String>> doPagingSearch(IndexSearcher searcher, Query query, String pureString) throws IOException {
+    public SearchResult doPagingSearch(IndexSearcher searcher, Query query, String pureString) throws IOException {
         // Set<Term> keywords = new HashSet<Term>();
         // query.extractTerms(keywords);
         // 备选单词
-        List<String> strs = Arrays.asList(query.toString("contents").split(" "));
+        List<String> queryArr = Arrays.asList(query.toString("contents").split(" "));
+        List<String> strs = new ArrayList<>(queryArr);
         strs.add(pureString); // 整个串
 
         // search第二个参数是需要返回多少条记录，先用total搜索一遍获得记录数目
@@ -200,11 +203,8 @@ public class SearchFiles {
         searcher.search(query, collector);
         int numTotalHits = collector.getTotalHits();
         System.out.println(numTotalHits + " total matching documents");
-        Map<String, List<String>> ret = new HashMap<>();
+        SearchResult ret = new SearchResult();
         if (numTotalHits > 0) {
-            for (String str : strs) {
-                ret.put(str, new ArrayList<>());
-            }
             TopDocs results = searcher.search(query, numTotalHits);
             ScoreDoc[] hits = results.scoreDocs;
             for (int i = 0; i < numTotalHits; i++) {
@@ -222,7 +222,7 @@ public class SearchFiles {
                         String firstContent = content.split("doc:")[0];
                         for (String key : strs) {
                             if (checkCandidate(firstContent, key)) {
-                                ret.get(key).add(content);
+                                ret.add(key, content);
                             }
                         }
                     }
@@ -233,10 +233,11 @@ public class SearchFiles {
     }
 
     // 将搜索结果写入文件
-    private boolean save2File(String pureString, Map<String, List<String>> searchResults) {
+    private boolean save2File(String pureString, SearchResult searchResult) {
         AtomicBoolean ret = new AtomicBoolean(false);
         String dirPath = mkdir(pureString);
-        searchResults.forEach((key, results) -> {
+        searchResult.getResults().forEach((key, model) -> {
+            List<String> results = model.getDocuments();
             if(results.size()>0){
                 ret.set(putToFile(key, results, dirPath));
             }
@@ -250,7 +251,7 @@ public class SearchFiles {
         do {
             idx = candidate.indexOf(key, idx+1);
             //如果没有找到key或者找到的key是被包裹在【】中都不算，否则就返回true
-            if(idx==0 || idx>0 && !candidate.substring(idx-1, idx).equals("【".toString())){
+            if(idx==0 || idx>0 && !candidate.substring(idx-1, idx).equals("【")){
                 ret = true;
                 break;
             }

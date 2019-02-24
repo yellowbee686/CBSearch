@@ -130,9 +130,9 @@ public class Utils {
 
 	public static String getIndexPath(boolean writeFull) {
 		if (writeFull) {
-			return "index/normal";
-		} else {
 			return "index/full";
+		} else {
+			return "index/normal";
 		}
 	}
 }

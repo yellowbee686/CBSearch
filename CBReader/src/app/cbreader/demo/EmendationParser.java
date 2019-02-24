@@ -287,9 +287,9 @@ public class EmendationParser {
     public void write2File(File doc, List<String> strings, String outPath, boolean withTitle) {
         try {
             if(!strings.isEmpty()) {
-                String title = strings.get(0); //title放在strings最前
-                if (!withTitle) {
-                    strings.remove(0);
+                String title = ""; //title放在strings最前
+                if (withTitle) {
+                    title = strings.get(0);
                 }
                 String fileName = doc.getName();
                 fileName = fileName.substring(0, fileName.length()-4); //去除扩展名
@@ -313,6 +313,7 @@ public class EmendationParser {
                 pw.close();
             }
         } catch (IOException e) {
+            System.out.println("failed path: " + outPath);
             e.printStackTrace();
         }
     }

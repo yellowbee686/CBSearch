@@ -1,7 +1,10 @@
-package app.cbreader.demo;
+package app.cbreader.demo.model;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import app.cbreader.demo.IndexFiles;
+import app.cbreader.demo.Utils;
 
 public class SortStrokeItem {
 	public ArrayList<String> uniValues;

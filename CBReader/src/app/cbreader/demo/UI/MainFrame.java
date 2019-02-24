@@ -13,7 +13,7 @@ import javax.swing.*;
 
 import app.cbreader.demo.IndexFiles;
 import app.cbreader.demo.SearchFiles;
-import app.cbreader.demo.Utils;
+import app.cbreader.demo.model.SearchResult;
 
 public class MainFrame extends JFrame implements ActionListener {
     private JButton chooseBtn;
@@ -99,7 +99,7 @@ public class MainFrame extends JFrame implements ActionListener {
                 String dirPath = dirChooser.getSelectedFile().getAbsolutePath();
                 chooseField.setText(dirPath);
                 IndexFiles indexer = new IndexFiles(dirPath, true, writeFull, true,
-                        true, false);
+                        true, true);
                 indexer.prepareIndex();
                 // writeFull的模式下需要选择第二个对话框来确定哪些文件夹需要建索引
                 if (!writeFull) {
@@ -114,13 +114,14 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (e.getSource() == searchBtn) {
             String keywords = searchField.getText().trim();
             SearchFiles searcher = new SearchFiles(keywords, writeFull);
-            Boolean seaFlag = searcher.doSearch();
-            if (seaFlag) {
-                String outDirPath = Utils.getBaseDir() + "/result";
-                JOptionPane.showMessageDialog(this, "查询成功，请到" + outDirPath + "查阅结果文件");
-            } else {
-                JOptionPane.showMessageDialog(this, "建立索引失败");
-            }
+            SearchResult searchResult = searcher.doSearch();
+            FullResultFrame uiFrame = new FullResultFrame("搜索结果", searchResult);
+//            if (seaFlag) {
+//                String outDirPath = Utils.getBaseDir() + "/result";
+//                JOptionPane.showMessageDialog(this, "查询成功，请到" + outDirPath + "查阅结果文件");
+//            } else {
+//                JOptionPane.showMessageDialog(this, "搜索失败");
+//            }
         } else if (e.getSource() == fullBtn) {
             fullDirChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int ret = fullDirChooser.showOpenDialog(this);

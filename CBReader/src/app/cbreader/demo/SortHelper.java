@@ -1,5 +1,7 @@
 package app.cbreader.demo;
 
+import app.cbreader.demo.model.SortStrokeItem;
+
 //用于对体例或附录进行排序的
 public class SortHelper{
 	public int count;

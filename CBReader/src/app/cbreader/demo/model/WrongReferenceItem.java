@@ -1,4 +1,4 @@
-package app.cbreader.demo;
+package app.cbreader.demo.model;
 
 public class WrongReferenceItem {
 	public String sample;
