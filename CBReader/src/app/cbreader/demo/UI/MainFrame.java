@@ -12,9 +12,10 @@ import java.util.List;
 import javax.swing.*;
 
 import app.cbreader.demo.IndexFiles;
-import app.cbreader.demo.SearchFiles;
+import app.cbreader.demo.search.SearchFiles;
 import app.cbreader.demo.Utils;
 import app.cbreader.demo.model.SearchResult;
+import app.cbreader.demo.search.SearchOption;
 
 public class MainFrame extends JFrame implements ActionListener {
     private JButton chooseBtn;
@@ -25,8 +26,10 @@ public class MainFrame extends JFrame implements ActionListener {
     private JLabel chooseLabel;
     private JLabel searchLabel;
     private JCheckBox writeFullBox;
+    private JCheckBox abaBox;
 
     private boolean writeFull = true;
+    private boolean abaSearch = false;
     private JFileChooser fullDirChooser;
     private JButton fullBtn;
     private JTextField fullField;
@@ -50,6 +53,10 @@ public class MainFrame extends JFrame implements ActionListener {
         writeFullBox = new JCheckBox("混合搜索");
         writeFullBox.setSelected(writeFull);
         writeFullBox.addActionListener(this);
+        abaBox = new JCheckBox("ABA搜索");
+        abaBox.setSelected(abaSearch);
+        abaBox.addActionListener(this);
+
         dirChooser = new JFileChooser();
 
         JPanel choosePanel = new JPanel(new FlowLayout());
@@ -70,6 +77,7 @@ public class MainFrame extends JFrame implements ActionListener {
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(searchBtn);
+        searchPanel.add(abaBox);
 
         fullLabel = new JLabel("选择要搜索的文件夹：");
         fullBtn = new JButton("选择");
@@ -119,7 +127,7 @@ public class MainFrame extends JFrame implements ActionListener {
         } else if (e.getSource() == searchBtn) {
             String keywords = searchField.getText().trim();
             SearchFiles searcher = new SearchFiles(keywords, writeFull);
-            SearchResult searchResult = searcher.doSearch();
+            SearchResult searchResult = searcher.doSearch(new SearchOption(abaSearch));
             FullResultFrame uiFrame = new FullResultFrame("搜索结果", searchResult);
 //            if (seaFlag) {
 //                String outDirPath = Utils.getBaseDir() + "/result";
@@ -144,6 +152,8 @@ public class MainFrame extends JFrame implements ActionListener {
             }
         } else if (e.getSource() == writeFullBox) {
             writeFull = writeFullBox.isSelected();
+        } else if (e.getSource() == abaBox) {
+            abaSearch = abaBox.isSelected();
         }
     }
 

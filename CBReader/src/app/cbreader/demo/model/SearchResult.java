@@ -21,12 +21,14 @@ public class SearchResult {
         }
     }
 
-    public void add(String key, String doc) {
+    public void add(String key, String doc, String content) {
+        String summary = summaryContent(content, key);
+        String fullContent = String.format("doc:%s  %s", doc, summary);
         if (results.containsKey(key)) {
-            results.get(key).add(doc);
+            results.get(key).add(fullContent);
         } else {
             SearchResultModel model = new SearchResultModel(key);
-            model.add(doc);
+            model.add(fullContent);
             results.put(key, model);
         }
     }
@@ -51,6 +53,24 @@ public class SearchResult {
                 ret.addAll(model.getListData());
             }
         });
+        return ret;
+    }
+
+    private static final int SUMMARY_LIMIT = 20;
+    private static final String SUMMARY_STR = "...";
+
+    private String summaryContent(String content, String key) {
+        int idx = content.indexOf(key);
+        int start = Math.max(0, idx - SUMMARY_LIMIT);
+        int end = Math.min(content.length(), idx + SUMMARY_LIMIT);
+        String ret = "";
+        if (start > 0) {
+            ret = SUMMARY_STR;
+        }
+        ret += content.substring(start, end);
+        if (end < content.length()) {
+            ret += SUMMARY_STR;
+        }
         return ret;
     }
 }

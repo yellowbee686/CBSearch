@@ -1,4 +1,4 @@
-package app.cbreader.demo;
+package app.cbreader.demo.search;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +25,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TotalHitCountCollector;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
+import app.cbreader.demo.Utils;
 import app.cbreader.demo.model.SearchResult;
 
 /** Simple command-line based search demo. */
@@ -141,8 +142,7 @@ public class SearchFiles {
 //		reader.close();
 //	}
 
-    public SearchResult doSearch() {
-        boolean ret;
+    public SearchResult doSearch(SearchOption option) {
         SearchResult result = null;
         String index = Utils.getIndexPath(writeFull);
         String field = "contents";
@@ -160,7 +160,7 @@ public class SearchFiles {
             String pureString = queryString.trim();
             Query query = parser.parse(pureString);
             System.out.println("Searching for: " + query.toString());
-            result = doPagingSearch(searcher, query, pureString);
+            result = doPagingSearch(searcher, query, pureString, option);
 
             // 暂时都显示在列表中
             // ret = save2File(pureString, searchResult);
@@ -174,7 +174,6 @@ public class SearchFiles {
             reader.close();
         } catch (Exception e) {
             e.printStackTrace();
-            ret = false;
         }
 
         return result;
@@ -190,7 +189,7 @@ public class SearchFiles {
      * collected.
      *
      */
-    public SearchResult doPagingSearch(IndexSearcher searcher, Query query, String pureString) throws IOException {
+    public SearchResult doPagingSearch(IndexSearcher searcher, Query query, String pureString, SearchOption option) throws IOException {
         // Set<Term> keywords = new HashSet<Term>();
         // query.extractTerms(keywords);
         // 备选单词
@@ -215,16 +214,31 @@ public class SearchFiles {
                 docName = docName.substring(docName.lastIndexOf("\\")+1);
                 docName = docName.substring(0, docName.lastIndexOf("."));
                 for (String content : contents) {
-                    String fullContent = String.format("doc:%s  %s", docName, content);
+                    if (option.isAbaSearch()) {
+                        if (!checkAbaSearch(content, pureString)) {
+                            continue;
+                        }
+                    }
+
                     for (String key : strs) {
                         if (checkCandidate(content, key)) {
-                            ret.add(key, fullContent);
+                            ret.add(key, docName, content);
+                            break; //一条不论是符合哪个key，只出现一次，首先符合的肯定是完整的串
                         }
                     }
                 }
             }
         }
         return ret;
+    }
+
+    private boolean checkAbaSearch(String content, String key) {
+        // 必须是完整匹配
+        int idx = content.indexOf(key);
+        if (idx <= 0 || idx == content.length() - 1) {
+            return false;
+        }
+        return content.charAt(idx - 1) == content.charAt(idx + 1);
     }
 
     // 将搜索结果写入文件
