@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
+import app.cbreader.demo.model.ParseModel;
+
 /**
  * @author huangjunyi
  * Created on 2018-11-26
@@ -164,7 +166,8 @@ public class CatalogGenerator {
                         for (File file : files) {
                             if (checkByJuanId(file, pinId)) {
                                 // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
-                                List<String> texts = parser.parseOneDoc(file, ParseDocType.BODY, pinId);
+                                ParseModel model = parser.parseOneDoc(file, ParseDocType.BODY, pinId);
+                                List<String> texts = model.getTexts();
                                 if (!texts.isEmpty()) {
                                     parser.write2File(file, texts, absolutePath + items[0], true);
                                     String[] nameArray = file.getName().split("\\.");

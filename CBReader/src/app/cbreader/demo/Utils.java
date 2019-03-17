@@ -8,8 +8,11 @@ import java.io.InputStreamReader;
 import java.lang.Character.UnicodeBlock;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 import com.sun.istack.internal.Nullable;
+
+import app.cbreader.demo.model.NoteModel;
 
 public class Utils {
 	public static final String CBETA_MARK = " @cbeta"; //用来标记某一条是cbeta的校注，用于在最后确定格式用
@@ -134,5 +137,100 @@ public class Utils {
 		} else {
 			return "index/normal";
 		}
+	}
+
+	public static String[] KEY_STOPPER = new String[] {"【", "~", "ヵ", "＊"};
+	public static String KEY_SPLITER = "，"; //分隔一句中的每一项
+	public static String FAN_SPLITER = "～"; //梵文和中文分割的标记
+	public static String FAN_POSTFIX = "."; //梵文结尾的标记
+	public static String EQUAL_SPLITER = "＝"; //等号分割符
+
+	// 解析一个经过逗号分离，初步确定的key
+	private static String parseReferenceKey(String key) {
+		int postIdx = key.indexOf(FAN_POSTFIX);
+		//如果句点存在且不在最后一位，则省略前面的东西，适配Kammāssadhamma. 釰  T01n0026_038  这种情况
+		if(postIdx != -1 && postIdx<key.length()-1) {
+			key = key.substring(postIdx+1);
+		}
+		//如果存在梵文，则取前面的部分 例如T01n0001_005   提頭賴吒＝提帝賴吒【聖】～Dhataraṭṭha.
+		int splitIdx = key.indexOf(FAN_SPLITER);
+		if(splitIdx!=-1) {
+			key = key.substring(0, splitIdx);
+		}
+		//整句都是梵文的情况
+		if(splitIdx==-1 && postIdx==key.length()-1 && !key.isEmpty()) {
+			//System.out.println(key);
+			return "";
+		}
+		return key.trim();
+	}
+
+	public static List<NoteModel> getNotes(String sample) {
+		String[] arr = sample.split(KEY_SPLITER);
+		//默认等号前面的正文不会出现两个key，如果出现了，是软件错误，需要人工收录
+		// TODO 软件错误需要再排查，目前先不考虑
+//		if(firstKey.contains(KEY_SPLITER)) {
+//			wrongItems.add(new WrongReferenceItem(sample, fileName));
+//			return;
+//		}
+		List<NoteModel> ret = new ArrayList<>();
+		for (int i = 0; i < arr.length; i++) {
+			String firstKey = "", secondKey = "";
+			String remaining = arr[i];
+			String[] outs = new String[1];
+			boolean isEqual = false; //表示非+ -的情况
+			if(remaining.contains(EQUAL_SPLITER)) {
+				String[] parts = remaining.split(EQUAL_SPLITER);
+				//如果是第一段
+				if(i==0) {
+					firstKey = parts[0];
+					secondKey = parts[1];
+				} else { //如果不是第一段，则应该只能去除最前面的=号
+					secondKey = parts[1];
+				}
+				isEqual = true;
+			} else if (checkStringContainsAdd(remaining, outs)) {
+				if(i==0) {
+					firstKey = outs[0];
+				}
+				secondKey = remaining;
+			} else if (checkStringContainsSub(remaining, outs)) {
+				if(i==0) {
+					firstKey = outs[0];
+				}
+				secondKey = remaining;
+			} else { //作为一个整体的key
+				secondKey = remaining;
+				isEqual = true;
+			}
+			if(i==0) {
+				firstKey = parseReferenceKey(firstKey);
+				if(firstKey.isEmpty()) {
+					return ret;
+				}
+			}
+			String copy = secondKey;
+			boolean hasStopper = false;
+			//依次使用停止符进行分析，如果找到，则将前面的作为key
+			for (int j = 0; j < KEY_STOPPER.length; j++) {
+				String[] parsed = copy.split(KEY_STOPPER[j]);
+				//取出最前面的分隔符分隔出的才是真正的key 如果分隔符是最后一个字符，则只能解析出一项，但去掉了分割符，比之前短
+				if(parsed.length>0 && parsed[0].length()<secondKey.length()) {
+					secondKey = parsed[0];
+					hasStopper = true;
+				}
+			}
+			if(!hasStopper) {
+				//System.out.println(String.format("key=%s sample=%s filename=%s", secondKey, sample, fileName));
+			}
+			secondKey = parseReferenceKey(secondKey);
+			if(secondKey.isEmpty()) {
+				continue;
+			}
+
+			NoteModel model = new NoteModel(isEqual, firstKey, secondKey);
+			ret.add(model);
+		}
+		return ret;
 	}
 }

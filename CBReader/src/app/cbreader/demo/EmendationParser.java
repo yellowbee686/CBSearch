@@ -16,6 +16,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import app.cbreader.demo.model.ParseModel;
+
 //解析CBeta文件，输出自己分析后的文本到/notes目录下
 public class EmendationParser {
     protected String dirPath; //源目录
@@ -116,7 +118,7 @@ public class EmendationParser {
         return title;
     }
 
-    private void parseBackPart(Element textElement, List<String> strings, String fileName) {
+    private void parseBackPart(Element textElement, ParseModel model, String fileName) {
         HashSet<String> noteKeys = new HashSet<>();
         Element backElement = textElement.element("back");
         List<Element> cbs = backElement.elements();
@@ -138,7 +140,7 @@ public class EmendationParser {
 //									anString = anString.concat(Utils.CBETA_MARK);
 //								}
                             if(!anString.isEmpty()) {
-                                strings.add(anString);
+                                model.addByElement(anString, ele);
                             }
                         }
                         if(!isTaisho) {
@@ -150,10 +152,10 @@ public class EmendationParser {
         }
     }
     // dfs的找所有p都输出出来
-    private void dfsElementByName(Element element, List<String> strings) {
+    private void dfsElementByName(Element element, ParseModel model) {
         List<Element> items = element.elements();
         for (Element item : items) {
-            dfsElementByName(item, strings);
+            dfsElementByName(item, model);
             String name = item.getName();
             if ("p".equals(name)) {
                 String text = item.getTextTrim();
@@ -163,19 +165,21 @@ public class EmendationParser {
 //            	if (note != null) {
 //            		text += note;
 //				}
-                strings.add(text);
+                model.addByElement(text, item);
             }
             // 列表项的单独成行
             if ("lg".equals(name)) {
                 List<Element> itemList = item.elements();
                 for (Element innerItem : itemList) {
                     if ("l".equals(innerItem.getName())) {
-                        strings.add(innerItem.getTextTrim());
+                        model.addByElement(innerItem.getTextTrim(), innerItem);
                     }
                 }
             }
         }
     }
+
+
 
     private boolean checkByPinId(Element root, String pinId) {
         // j表示按卷区分，在CatalogGenerator中判断过了
@@ -240,11 +244,11 @@ public class EmendationParser {
     // 为了适配两边的需求，已经改成无状态的了
     // 在解析正文模式下，需要符合的pinId才进行解析
     // 返回解析到的所有内容
-    public List<String> parseOneDoc(File doc, ParseDocType parseType, String pinId) {
+    public ParseModel parseOneDoc(File doc, ParseDocType parseType, String pinId) {
         SAXReader reader = new SAXReader();
-        List<String> strings = new ArrayList<>(); //存放异文结果
         //System.out.println(String.format("start parse %s", outPath));
         charDecl.clear();
+        ParseModel model = new ParseModel(parseType);
         try {
             Document document = reader.read(doc);
             String fileName = doc.getName();
@@ -256,7 +260,7 @@ public class EmendationParser {
             Element bodyElement = textElement.element("body");
             // 如果品级不对就不再解析
             if (!checkByPinId(bodyElement, pinId)) {
-                return strings;
+                return model;
             }
 
             if (parseType == ParseDocType.BODY) {
@@ -267,7 +271,7 @@ public class EmendationParser {
             title = title.replace("\r", "").replace("\n", "");
 
             if (parseType == ParseDocType.BACK) {
-                parseBackPart(textElement, strings, fileName);
+                parseBackPart(textElement, model, fileName);
             }
             if (parseType == ParseDocType.BODY) {
                 /*
@@ -275,13 +279,13 @@ public class EmendationParser {
                 TODO SAXReader解析一个节点时无法正确判断其下的文本和其中的各种Element之间的顺序，这里没有调用parseOnePartWithG来替换显示不出的字
                 TODO 需要复查建索引的过程，索引似乎没考虑这种字，如果不做替换的话是搜索不出的
                 */
-                strings.add(title); //把title放在最前
-                dfsElementByName(bodyElement, strings);
+                model.setTitle(title);
+                dfsElementByName(bodyElement, model);
             }
         } catch (DocumentException e) {
             e.printStackTrace();
         }
-        return strings;
+        return model;
     }
 
     public void write2File(File doc, List<String> strings, String outPath, boolean withTitle) {
@@ -491,7 +495,8 @@ public class EmendationParser {
     }
 
     protected void processOneFile(File file) {
-        List<String> texts = parseOneDoc(file, ParseDocType.BACK, "");
+        ParseModel model = parseOneDoc(file, ParseDocType.BACK, "");
+        List<String> texts = model.getTexts();
         write2File(file, texts, getOutputPath(file), false);
     }
 

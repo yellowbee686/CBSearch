@@ -103,12 +103,15 @@ public class MainFrame extends JFrame implements ActionListener {
                 indexer.prepareIndex();
                 // writeFull的模式下需要选择第二个对话框来确定哪些文件夹需要建索引
                 if (!writeFull) {
+                    indexer.buildCatalog();
                     boolean idxFlag = indexer.buildIndex(indexer.getDefaultDocDirs());
                     if (idxFlag) {
                         JOptionPane.showMessageDialog(this, "建立索引成功");
                     } else {
                         JOptionPane.showMessageDialog(this, "建立索引失败");
                     }
+                } else {
+                    JOptionPane.showMessageDialog(this, "所有数据解析成功，请选择需要索引的部分");
                 }
             }
         } else if (e.getSource() == searchBtn) {
@@ -122,14 +125,20 @@ public class MainFrame extends JFrame implements ActionListener {
 //            } else {
 //                JOptionPane.showMessageDialog(this, "搜索失败");
 //            }
-        } else if (e.getSource() == fullBtn) {
+        } else if (e.getSource() == fullBtn) { // 选择文件夹后进行索引
             fullDirChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int ret = fullDirChooser.showOpenDialog(this);
             if (ret == JFileChooser.APPROVE_OPTION) {
                 List<File> dirs = Arrays.asList(fullDirChooser.getSelectedFiles());
+                // 构造一个对象，很多参数此时不是很重要
                 IndexFiles indexer = new IndexFiles("", true, writeFull, true,
-                        true, false);
-                indexer.buildIndex(dirs);
+                        false, true);
+                boolean idxFlag = indexer.buildIndex(dirs);
+                if (idxFlag) {
+                    JOptionPane.showMessageDialog(this, "建立索引成功");
+                } else {
+                    JOptionPane.showMessageDialog(this, "建立索引失败");
+                }
             }
         } else if (e.getSource() == writeFullBox) {
             writeFull = writeFullBox.isSelected();
