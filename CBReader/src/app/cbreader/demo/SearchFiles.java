@@ -203,7 +203,7 @@ public class SearchFiles {
         searcher.search(query, collector);
         int numTotalHits = collector.getTotalHits();
         System.out.println(numTotalHits + " total matching documents");
-        SearchResult ret = new SearchResult();
+        SearchResult ret = new SearchResult(pureString);
         if (numTotalHits > 0) {
             TopDocs results = searcher.search(query, numTotalHits);
             ScoreDoc[] hits = results.scoreDocs;
@@ -214,16 +214,11 @@ public class SearchFiles {
                 String docName = document.get("path");
                 docName = docName.substring(docName.lastIndexOf("\\")+1);
                 docName = docName.substring(0, docName.lastIndexOf("."));
-                for (int j = 0; j < contents.length; j++) {
-                    contents[j]+="  doc:"+docName;
-                }
                 for (String content : contents) {
-                    if (content.contains("doc:")) {
-                        String firstContent = content.split("doc:")[0];
-                        for (String key : strs) {
-                            if (checkCandidate(firstContent, key)) {
-                                ret.add(key, content);
-                            }
+                    String fullContent = String.format("doc:%s  %s", docName, content);
+                    for (String key : strs) {
+                        if (checkCandidate(content, key)) {
+                            ret.add(key, fullContent);
                         }
                     }
                 }

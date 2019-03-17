@@ -6,6 +6,11 @@ import java.util.Vector;
 
 public class SearchResult {
     private Map<String, SearchResultModel> results = new HashMap<>(); //一次搜索结果会被拆成多个词
+    private String searchKey; //搜索的原词，应该排在最前面
+
+    public SearchResult(String searchKey) {
+        this.searchKey = searchKey;
+    }
 
     public void add(SearchResultModel resultModel) {
         String key = resultModel.getKey();
@@ -36,7 +41,16 @@ public class SearchResult {
      */
     public Vector<String> getListData() {
         Vector<String> ret = new Vector<>();
-        results.forEach((key, model) -> ret.addAll(model.getListData()));
+        SearchResultModel keyModel = results.get(searchKey);
+        // 首先列出原始的搜索词
+        if (keyModel != null) {
+            ret.addAll(keyModel.getListData());
+        }
+        results.forEach((key, model) -> {
+            if (!key.equals(searchKey)) {
+                ret.addAll(model.getListData());
+            }
+        });
         return ret;
     }
 }

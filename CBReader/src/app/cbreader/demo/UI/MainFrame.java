@@ -13,6 +13,7 @@ import javax.swing.*;
 
 import app.cbreader.demo.IndexFiles;
 import app.cbreader.demo.SearchFiles;
+import app.cbreader.demo.Utils;
 import app.cbreader.demo.model.SearchResult;
 
 public class MainFrame extends JFrame implements ActionListener {
@@ -76,7 +77,8 @@ public class MainFrame extends JFrame implements ActionListener {
         fullBtn.setSize(25, 10);
         fullField = new JTextField(20);
         fullField.setEditable(false);
-        fullDirChooser = new JFileChooser();
+
+        fullDirChooser = new JFileChooser(Utils.getBaseDir() + Utils.FULLTEXT_PATH);
         fullDirChooser.setMultiSelectionEnabled(true);
         JPanel fullPanel = new JPanel(new FlowLayout());
         fullPanel.setSize(600, 100);
