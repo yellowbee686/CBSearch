@@ -98,7 +98,7 @@ public class IndexFiles {
 		return Collections.singletonList(docDir);
 	}
 
-	public boolean buildIndex(List<File> docDirs) {
+	public boolean buildIndex(List<File> docDirs, boolean newIndex) {
 		boolean ret = true;
 		//System.getProperty("user.dir")返回执行java程序的目录
 
@@ -116,7 +116,12 @@ public class IndexFiles {
 					analyzer);
 
 			// Add new documents to an existing index:
-			iwc.setOpenMode(OpenMode.CREATE);
+			if (newIndex) {
+				iwc.setOpenMode(OpenMode.CREATE);
+			} else {
+				iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
+			}
+
 			
 			IndexWriter writer = new IndexWriter(dir, iwc);
 			for (File docDir : docDirs) {

@@ -121,7 +121,7 @@ public class ParseModel {
                     for (NoteModel note : notes) {
                         if (text.contains(note.getKey())) {
                             String copied = text.replaceAll(note.getKey(), note.getNote());
-                            fullTexts.add(copied);
+                            fullTexts.add(Utils.NOTE_PREFIX + copied);
                         }
                     }
                 }

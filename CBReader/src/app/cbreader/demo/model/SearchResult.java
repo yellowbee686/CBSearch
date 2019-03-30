@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import app.cbreader.demo.Utils;
+
 public class SearchResult {
     private Map<String, SearchResultModel> results = new HashMap<>(); //一次搜索结果会被拆成多个词
     private String searchKey; //搜索的原词，应该排在最前面
@@ -60,10 +62,16 @@ public class SearchResult {
     private static final String SUMMARY_STR = "...";
 
     private String summaryContent(String content, String key) {
+        String ret = "";
+        // 异文则将异文标记添加在最前面
+        if (content.startsWith(Utils.NOTE_PREFIX)) {
+            ret = Utils.NOTE_PREFIX;
+            content = content.substring(Utils.NOTE_PREFIX.length());
+        }
+
         int idx = content.indexOf(key);
         int start = Math.max(0, idx - SUMMARY_LIMIT);
         int end = Math.min(content.length(), idx + SUMMARY_LIMIT);
-        String ret = "";
         if (start > 0) {
             ret = SUMMARY_STR;
         }

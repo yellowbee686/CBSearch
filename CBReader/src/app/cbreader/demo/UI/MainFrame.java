@@ -27,9 +27,11 @@ public class MainFrame extends JFrame implements ActionListener {
     private JLabel searchLabel;
     private JCheckBox writeFullBox;
     private JCheckBox abaBox;
+    private JCheckBox newIndexBox;
 
-    private boolean writeFull = true;
-    private boolean abaSearch = false;
+    private boolean writeFull = true; //是否是全文加异文索引
+    private boolean abaSearch = false; //是否是aba搜索模式
+    private boolean newIndex = false; //是否是全新索引
     private JFileChooser fullDirChooser;
     private JButton fullBtn;
     private JTextField fullField;
@@ -85,6 +87,9 @@ public class MainFrame extends JFrame implements ActionListener {
         fullBtn.setSize(25, 10);
         fullField = new JTextField(20);
         fullField.setEditable(false);
+        newIndexBox = new JCheckBox("全新索引");
+        newIndexBox.setSelected(newIndex);
+        newIndexBox.addActionListener(this);
 
         fullDirChooser = new JFileChooser(Utils.getBaseDir() + Utils.FULLTEXT_PATH);
         fullDirChooser.setMultiSelectionEnabled(true);
@@ -93,6 +98,7 @@ public class MainFrame extends JFrame implements ActionListener {
         fullPanel.add(fullLabel);
         fullPanel.add(fullField);
         fullPanel.add(fullBtn);
+        fullPanel.add(newIndexBox);
 
         this.add(choosePanel, BorderLayout.PAGE_START);
         this.add(fullPanel, BorderLayout.CENTER);
@@ -114,7 +120,7 @@ public class MainFrame extends JFrame implements ActionListener {
                 // writeFull的模式下需要选择第二个对话框来确定哪些文件夹需要建索引
                 if (!writeFull) {
                     indexer.buildCatalog();
-                    boolean idxFlag = indexer.buildIndex(indexer.getDefaultDocDirs());
+                    boolean idxFlag = indexer.buildIndex(indexer.getDefaultDocDirs(), newIndex);
                     if (idxFlag) {
                         JOptionPane.showMessageDialog(this, "建立索引成功");
                     } else {
@@ -143,7 +149,7 @@ public class MainFrame extends JFrame implements ActionListener {
                 // 构造一个对象，很多参数此时不是很重要
                 IndexFiles indexer = new IndexFiles("", true, writeFull, true,
                         false, true);
-                boolean idxFlag = indexer.buildIndex(dirs);
+                boolean idxFlag = indexer.buildIndex(dirs, newIndex);
                 if (idxFlag) {
                     JOptionPane.showMessageDialog(this, "建立索引成功");
                 } else {
@@ -154,6 +160,8 @@ public class MainFrame extends JFrame implements ActionListener {
             writeFull = writeFullBox.isSelected();
         } else if (e.getSource() == abaBox) {
             abaSearch = abaBox.isSelected();
+        } else if (e.getSource() == newIndexBox) {
+            newIndex = newIndexBox.isSelected();
         }
     }
 

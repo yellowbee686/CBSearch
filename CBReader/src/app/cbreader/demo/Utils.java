@@ -19,6 +19,7 @@ public class Utils {
 	public static final String LACK_WORD = "（缺字）";
 	public static final String NOTE_PATH = "/notes";
 	public static final String FULLTEXT_PATH = "/fulltext";
+	public static final String NOTE_PREFIX = "[异] ";
 	//有一些符号标记的key应该和不带标记的排在一起  ぃ标记为其他校勘记中得来的校注
 	private static String OPTIONAL_MARK[] = {"？", "ぃ", "ィ"}; 
 	public static boolean endsWithOptionalMark(String str) {
