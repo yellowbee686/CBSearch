@@ -79,7 +79,7 @@ public class MainFrame extends JFrame implements ActionListener {
         searchPanel.add(searchLabel);
         searchPanel.add(searchField);
         searchPanel.add(searchBtn);
-        searchPanel.add(abaBox);
+        // searchPanel.add(abaBox);  //暂时不用aba搜索
 
         fullLabel = new JLabel("选择要搜索的文件夹：");
         fullBtn = new JButton("选择");
@@ -116,10 +116,10 @@ public class MainFrame extends JFrame implements ActionListener {
                 chooseField.setText(dirPath);
                 IndexFiles indexer = new IndexFiles(dirPath, true, writeFull, true,
                         true, true);
+                indexer.buildCatalog();
                 indexer.prepareIndex();
                 // writeFull的模式下需要选择第二个对话框来确定哪些文件夹需要建索引
                 if (!writeFull) {
-                    indexer.buildCatalog();
                     boolean idxFlag = indexer.buildIndex(indexer.getDefaultDocDirs(), newIndex);
                     if (idxFlag) {
                         JOptionPane.showMessageDialog(this, "建立索引成功");

@@ -84,6 +84,15 @@ public class Utils {
 	    return System.getProperty("user.dir");
     }
 
+	//创建嵌套文件夹并返回absolutePath
+	public static String mkdir(String path) {
+		File dir = new File(path);
+		if(!dir.exists()) {
+			dir.mkdirs();
+		}
+		return path;
+	}
+
 	@Nullable
 	public static BufferedReader openFile(String relativeName) {
 		String path = getBaseDir()+relativeName;

@@ -59,22 +59,24 @@ public class IndexFiles {
 		this.updateIndex = updateIndex;
 		this.writeFull = writeFull;
 		this.buildCatalog = buildCatalog;
-	}
-
-	public void prepareIndex() {
 		if(parseXml) {
 			if (writeFull) {
 				emendationParser = new FullTextGenerator(inPath);
 			} else {
 				emendationParser = new EmendationParser(inPath);
 			}
-			emendationParser.parseAllDocs();
+		}
+	}
+
+	public void prepareIndex() {
+		if(parseXml) {
+			emendationParser.parseAllDocs(catalogGenerator.getMatchFileMap());
 		}
 	}
 
 	public void buildCatalog() {
+		catalogGenerator = new CatalogGenerator(inPath, emendationParser);
 		if (buildCatalog) {
-			catalogGenerator = new CatalogGenerator(inPath, emendationParser);
 			catalogGenerator.buildCatalog();
 		}
 	}
@@ -253,6 +255,7 @@ public class IndexFiles {
 						if (null == tmp)
 							break;
 						if(parseReference) {
+							// 如果有catalog，则需要校验是否在其中
 							if (!buildCatalog || catalogGenerator.isFileMatch(onlyId)) {
 								referenceOne(tmp, onlyId);
 							}

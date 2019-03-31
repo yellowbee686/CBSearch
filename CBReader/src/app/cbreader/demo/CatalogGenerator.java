@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -26,7 +27,7 @@ public class CatalogGenerator {
         this.parser = parser;
     }
 
-    private final String baseOutputPath = Utils.getBaseDir() + "/catalog/";
+    private static final String baseOutputPath = Utils.getBaseDir() + "/catalog/";
     // 不构造成map是因为目录中可能不会补全前面的那么多0，因此改成按数字来获取
     protected HashMap<String, ArrayList<File>> dataFileMap = new HashMap<>();
 
@@ -87,8 +88,17 @@ public class CatalogGenerator {
         return matchFileNames.contains(fileName);
     }
 
+    private Map<String, String> matchFileMap = new HashMap<>();
+
+    // {fileName->relativePath}
+    public Map<String, String> getMatchFileMap() {
+        return matchFileMap;
+    }
+
+    // 遍历所有数据源文件，筛选出catalog.txt中的各个按朝代人名区分的文件，将正文写入对应的catalog/目录下
+    // 暂时是有状态的，会填充matchFileMap 为fullTextSearch筛选文件夹提供指导
     public void buildCatalog() {
-        BufferedReader reader = Utils.openFile("/dictData/catalog_few.txt");
+        BufferedReader reader = Utils.openFile("/dictData/catalog.txt");
         if(reader == null) {
             return;
         }
@@ -142,7 +152,8 @@ public class CatalogGenerator {
                 paths.push(title);
                 String[] papers = line.split("；");
                 // Stack的foreach依然是顺序遍历
-                String absolutePath = mkdir(makeRelativePath(paths));
+                String relativePath = makeRelativePath(paths);
+                String absolutePath = Utils.mkdir(baseOutputPath + relativePath);
                 for (String paper : papers) {
                     String[] items = paper.trim().split(" ");
                     if (items.length <= 1 || items[0].length() <= 0) {
@@ -171,7 +182,9 @@ public class CatalogGenerator {
                                 if (!texts.isEmpty()) {
                                     parser.write2File(file, texts, absolutePath + items[0], true);
                                     String[] nameArray = file.getName().split("\\.");
-                                    matchFileNames.add(nameArray[0]);
+                                    String fileName = nameArray[0];
+                                    matchFileNames.add(fileName);
+                                    matchFileMap.put(fileName, relativePath);
                                 }
                             }
                         }
@@ -214,15 +227,5 @@ public class CatalogGenerator {
             ret += path + "/";
         }
         return ret;
-    }
-
-    //创建嵌套文件夹并返回absolutePath
-    private String mkdir(String relativePath) {
-        String path = baseOutputPath + relativePath;
-        File dir = new File(path);
-        if(!dir.exists()) {
-            dir.mkdirs();
-        }
-        return path;
     }
 }

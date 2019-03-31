@@ -58,7 +58,7 @@ public class SearchResult {
         return ret;
     }
 
-    private static final int SUMMARY_LIMIT = 20;
+    private static final int SUMMARY_LIMIT = 10;
     private static final String SUMMARY_STR = "...";
 
     private String summaryContent(String content, String key) {
@@ -73,7 +73,7 @@ public class SearchResult {
         int start = Math.max(0, idx - SUMMARY_LIMIT);
         int end = Math.min(content.length(), idx + SUMMARY_LIMIT);
         if (start > 0) {
-            ret = SUMMARY_STR;
+            ret += SUMMARY_STR;
         }
         ret += content.substring(start, end);
         if (end < content.length()) {

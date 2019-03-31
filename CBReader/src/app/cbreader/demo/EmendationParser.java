@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import app.cbreader.demo.model.ParseModel;
 
@@ -494,22 +495,22 @@ public class EmendationParser {
         return builder.toString();
     }
 
-    protected void processOneFile(File file) {
+    protected void processOneFile(File file, Map<String, String> pathMap) {
         ParseModel model = parseOneDoc(file, ParseDocType.BACK, "");
         List<String> texts = model.getTexts();
         write2File(file, texts, getOutputPath(file), false);
     }
 
     // 遍历所有文件
-    public Boolean parseAllDocs() {
-        Boolean ret = true;
+    public boolean parseAllDocs(Map<String, String> pathMap) {
+        boolean ret = true;
         File rootDir = new File(dirPath);
         LinkedList<File> dirList = new LinkedList<>();
         if (rootDir.exists()) {
             if(rootDir.isDirectory()) {
                 dirList.add(rootDir);
             } else {
-                processOneFile(rootDir);
+                processOneFile(rootDir, pathMap);
             }
         } else {
             ret = false;
@@ -526,7 +527,7 @@ public class EmendationParser {
                         } else {
                             // T用来标记大正藏
                             if(file.getName().startsWith("T")) {
-                                processOneFile(file);
+                                processOneFile(file, pathMap);
                             }
                         }
                     }

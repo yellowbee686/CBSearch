@@ -156,7 +156,9 @@ public class SearchFiles {
 
             // :Post-Release-Update-Version.LUCENE_XY:
             QueryParser parser = new QueryParser(Version.LUCENE_48, field, analyzer);
-            parser.setDefaultOperator(QueryParser.OR_OPERATOR);
+            // QueryParser.AND_OPERATOR是完全匹配 OR_OPERATOR是部分匹配，但部分匹配时由于分词不正确可能会都拆成单字
+            // 整体的反而没有放在最前，还得自己排序
+            parser.setDefaultOperator(QueryParser.AND_OPERATOR);
             String pureString = queryString.trim();
             Query query = parser.parse(pureString);
             System.out.println("Searching for: " + query.toString());
@@ -189,20 +191,20 @@ public class SearchFiles {
      * collected.
      *
      */
-    public SearchResult doPagingSearch(IndexSearcher searcher, Query query, String pureString, SearchOption option) throws IOException {
+    public SearchResult doPagingSearch(IndexSearcher searcher, Query query, String searchKey, SearchOption option) throws IOException {
         // Set<Term> keywords = new HashSet<Term>();
         // query.extractTerms(keywords);
         // 备选单词
         List<String> queryArr = Arrays.asList(query.toString("contents").split(" "));
         List<String> strs = new ArrayList<>(queryArr);
-        strs.add(pureString); // 整个串
+        strs.add(searchKey); // 整个串
 
         // search第二个参数是需要返回多少条记录，先用total搜索一遍获得记录数目
         TotalHitCountCollector collector = new TotalHitCountCollector();
         searcher.search(query, collector);
         int numTotalHits = collector.getTotalHits();
         System.out.println(numTotalHits + " total matching documents");
-        SearchResult ret = new SearchResult(pureString);
+        SearchResult ret = new SearchResult(searchKey);
         if (numTotalHits > 0) {
             TopDocs results = searcher.search(query, numTotalHits);
             ScoreDoc[] hits = results.scoreDocs;
@@ -215,7 +217,7 @@ public class SearchFiles {
                 docName = docName.substring(0, docName.lastIndexOf("."));
                 for (String content : contents) {
                     if (option.isAbaSearch()) {
-                        if (!checkAbaSearch(content, pureString)) {
+                        if (!checkAbaSearch(content, searchKey)) {
                             continue;
                         }
                     }
