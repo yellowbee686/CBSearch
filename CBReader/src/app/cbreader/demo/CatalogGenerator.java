@@ -74,10 +74,11 @@ public class CatalogGenerator {
     // 在key前面补0凑足5位，这样存储和找的时候能够对上，因为总共4位数字+最后可能有的a或b
     // 同时兼容大小写的a b的区别
     private String makeupKey(String key) {
-        key = key.toLowerCase(); //不管读写时都转小写保持一致
-        while (key.length() < 5) {
-            key = "0" + key;
+        StringBuilder keyBuilder = new StringBuilder(key.toLowerCase());//不管读写时都转小写保持一致
+        while (keyBuilder.length() < 5) {
+            keyBuilder.insert(0, "0");
         }
+        key = keyBuilder.toString();
         return key;
     }
 
@@ -222,10 +223,10 @@ public class CatalogGenerator {
     }
 
     private String makeRelativePath(List<String> paths) {
-        String ret = "";
+        StringBuilder ret = new StringBuilder();
         for (String path : paths) {
-            ret += path + "/";
+            ret.append(path).append("/");
         }
-        return ret;
+        return ret.toString();
     }
 }

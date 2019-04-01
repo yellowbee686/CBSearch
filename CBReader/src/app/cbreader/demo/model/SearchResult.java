@@ -55,6 +55,12 @@ public class SearchResult {
                 ret.addAll(model.getListData());
             }
         });
+        // 将异文放在前面进行排序
+        ret.sort((r1, r2) -> {
+            int a1 = r1.contains(Utils.NOTE_PREFIX) ? 0 : 1;
+            int a2 = r2.contains(Utils.NOTE_PREFIX) ? 0 : 1;
+            return a1 - a2;
+        });
         return ret;
     }
 
