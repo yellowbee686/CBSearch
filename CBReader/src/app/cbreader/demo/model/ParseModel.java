@@ -10,7 +10,6 @@ import org.dom4j.Element;
 
 import app.cbreader.demo.ParseDocType;
 import app.cbreader.demo.Utils;
-import javafx.util.Pair;
 
 /**
  * @author huangjunyi
@@ -105,6 +104,7 @@ public class ParseModel {
         return pairs;
     }
 
+
     // 将异文替换正文，都保存之后输出
     public List<String> getFullText(ParseModel noteModel) {
         List<String> fullTexts = new ArrayList<>();
@@ -119,9 +119,10 @@ public class ParseModel {
                 // 我们的原则是有cbeta校注就不加大正校注了，而原line中两者都有，因此均列出了
                 if (notes != null) {
                     for (NoteModel note : notes) {
-                        if (text.contains(note.getKey())) {
+                        int idx = text.indexOf(note.getKey());
+                        if (idx >= 0) {
                             String copied = text.replaceAll(note.getKey(), note.getNote());
-                            fullTexts.add(Utils.NOTE_PREFIX + copied);
+                            fullTexts.add(Utils.NOTE_PREFIX + Utils.getNoteMark(note.getNote(), idx) + copied);
                         }
                     }
                 }

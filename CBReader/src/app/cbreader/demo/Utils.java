@@ -243,4 +243,9 @@ public class Utils {
 		}
 		return ret;
 	}
+
+	// 返回异文标记，直接用note代替 idx是备用参数，以后要用idx和length来标记时再替换
+	public static String getNoteMark(String note, int idx) {
+		return String.format("[%s]", note);
+	}
 }

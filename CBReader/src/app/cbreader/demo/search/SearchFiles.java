@@ -195,9 +195,10 @@ public class SearchFiles {
         // Set<Term> keywords = new HashSet<Term>();
         // query.extractTerms(keywords);
         // 备选单词
-        List<String> queryArr = Arrays.asList(query.toString("contents").split(" "));
-        List<String> strs = new ArrayList<>(queryArr);
-        strs.add(searchKey); // 整个串
+//        List<String> queryArr = Arrays.asList(query.toString("contents").split(" "));
+//        List<String> strs = new ArrayList<>(queryArr);
+//        strs.add(searchKey); // 整个串
+
 
         // search第二个参数是需要返回多少条记录，先用total搜索一遍获得记录数目
         TotalHitCountCollector collector = new TotalHitCountCollector();
@@ -222,12 +223,13 @@ public class SearchFiles {
                         }
                     }
 
-                    for (String key : strs) {
-                        if (checkCandidate(content, key)) {
-                            ret.add(key, docName, content);
-                            break; //一条不论是符合哪个key，只出现一次，首先符合的肯定是完整的串
-                        }
+                    //for (String key : strs) {
+                    // 只搜索整个query，则不要需要遍历各个key了，只搜一次即可
+                    if (checkCandidate(content, searchKey)) {
+                        ret.add(searchKey, docName, content);
+                        break; //一条不论是符合哪个key，只出现一次，首先符合的肯定是完整的串
                     }
+                    //}
                 }
             }
         }
@@ -267,6 +269,12 @@ public class SearchFiles {
                 break;
             }
         } while (idx!=-1);
+        // 如果是全文搜索中的异文，要判断是否符合异文的key，去掉所有重复的结果
+        if (ret && candidate.startsWith(Utils.NOTE_PREFIX)) {
+            int markBackIdx = candidate.indexOf("]", Utils.NOTE_PREFIX.length() + 1);
+            String note = candidate.substring(Utils.NOTE_PREFIX.length() + 1, markBackIdx);
+            ret = note.contains(key) || key.contains(note);
+        }
         return ret;
     }
 
