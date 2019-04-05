@@ -79,7 +79,7 @@ public class ParseModel {
                     }
                 }
             }
-        } else {
+        } else { //异文独立成行，只有一个key
             String key = root.attributeValue("target");
             keys.add(key.substring(1)); //删除首位的#
         }
@@ -97,8 +97,9 @@ public class ParseModel {
         Map<String, List<NoteModel>> pairs = new HashMap<>();
         for (LineModel line : lines) {
             String text = line.getText();
+            // get(0)是因为异文一行就一个note，因此直接取第0个即可
             String noteKey = line.getNoteKeys().get(0);
-            List<NoteModel> notes = Utils.getNotes(text);
+            List<NoteModel> notes = Utils.getNotes(text, true);
             pairs.put(noteKey, notes);
         }
         return pairs;

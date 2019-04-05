@@ -258,7 +258,7 @@ public class SearchFiles {
         return ret.get();
     }
 
-    private Boolean checkCandidate(String candidate, String key){
+    private boolean checkCandidate(String candidate, String key){
         int idx = -1;
         boolean ret = false;
         do {
@@ -273,7 +273,15 @@ public class SearchFiles {
         if (ret && candidate.startsWith(Utils.NOTE_PREFIX)) {
             int markBackIdx = candidate.indexOf("]", Utils.NOTE_PREFIX.length() + 1);
             String note = candidate.substring(Utils.NOTE_PREFIX.length() + 1, markBackIdx);
-            ret = note.contains(key) || key.contains(note);
+            // equal和add的note都是替换的文字，直接比较即可，sub的note是出现的idx，需要和key对比位置
+            try {
+                int deleteIdx = Integer.parseInt(note) + markBackIdx + 1; //被删除的sub字段应该在的位置
+                idx = candidate.indexOf(key);
+                // 如果这个位置在搜索词之内，则是正确的
+                ret = deleteIdx >= idx && deleteIdx <= idx + key.length();
+            } catch (NumberFormatException e) {
+                ret = note.contains(key) || key.contains(note);
+            }
         }
         return ret;
     }

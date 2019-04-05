@@ -175,7 +175,8 @@ public class Utils {
 		return key.trim();
 	}
 
-	public static List<NoteModel> getNotes(String sample) {
+	// isStrip为true表示剥离符号，为了全文搜索使用
+	public static List<NoteModel> getNotes(String sample, boolean isStrip) {
 		String[] arr = sample.split(KEY_SPLITER);
 		//默认等号前面的正文不会出现两个key，如果出现了，是软件错误，需要人工收录
 		// TODO 软件错误需要再排查，目前先不考虑
@@ -189,6 +190,7 @@ public class Utils {
 			String remaining = arr[i];
 			String[] outs = new String[1];
 			boolean isEqual = false; //表示非+ -的情况
+			boolean isAdd = false;
 			if(remaining.contains(EQUAL_SPLITER)) {
 				String[] parts = remaining.split(EQUAL_SPLITER);
 				//如果是第一段
@@ -203,6 +205,7 @@ public class Utils {
 				if(i==0) {
 					firstKey = outs[0];
 				}
+				isAdd = true;
 				secondKey = remaining;
 			} else if (checkStringContainsSub(remaining, outs)) {
 				if(i==0) {
@@ -237,15 +240,28 @@ public class Utils {
 			if(secondKey.isEmpty()) {
 				continue;
 			}
-
+			if (isStrip && !isEqual) {
+				secondKey = stripNote(secondKey, isAdd);
+			}
 			NoteModel model = new NoteModel(isEqual, firstKey, secondKey);
 			ret.add(model);
 		}
 		return ret;
 	}
 
-	// 返回异文标记，直接用note代替 idx是备用参数，以后要用idx和length来标记时再替换
+	private static String stripNote(String note, boolean isAdd) {
+		if (isAdd) {
+			return note.replaceAll(ADD_SPLITER, "").replaceAll("（", "").replaceAll("）", "");
+		}
+		// 减号意味着直接删除该字段
+		return "";
+	}
+
+	// 返回异文标记，直接用note代替 idx是为了迎合减号的情况，记录位置，方便判断
 	public static String getNoteMark(String note, int idx) {
+		if (note.isEmpty()) {
+			return String.format("[%s]", idx);
+		}
 		return String.format("[%s]", note);
 	}
 }

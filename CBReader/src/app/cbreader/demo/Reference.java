@@ -166,12 +166,11 @@ public class Reference {
 		for (String key : backKeySet) {
 			if(!keySet.contains(key) && references.containsKey(key)) {
 				Reference other = references.get(key);
-				StringBuilder localSb = new StringBuilder();
-				localSb.append(key);
-				localSb.append("（異：");
-				localSb.append(other.getBackContent(selfKey));
-				localSb.append("）\r\n");
-				SortHelper helper = new SortHelper(other.getBackCount(selfKey), key, localSb.toString());
+				String localSb = key +
+						"（異：" +
+						other.getBackContent(selfKey) +
+						"）\r\n";
+				SortHelper helper = new SortHelper(other.getBackCount(selfKey), key, localSb);
 				helperList.add(helper);
 				helperMap.put(key, helper);
 			}

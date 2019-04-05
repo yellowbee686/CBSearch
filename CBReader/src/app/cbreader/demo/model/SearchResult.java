@@ -25,7 +25,7 @@ public class SearchResult {
 
     public void add(String key, String doc, String content) {
         String summary = summaryContent(content, key);
-        String fullContent = String.format("doc:%s  %s", doc, summary);
+        String fullContent = String.format("doc:%s   %s", doc, summary);
         if (results.containsKey(key)) {
             results.get(key).add(fullContent);
         } else {

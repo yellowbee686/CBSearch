@@ -306,7 +306,7 @@ public class IndexFiles {
 	private void referenceOne(String sample, String fileName) {
 		int catalogCount = 0; //统计这次有多少条异文
 
-		List<NoteModel> notes = Utils.getNotes(sample);
+		List<NoteModel> notes = Utils.getNotes(sample, false);
 		for (int i = 0; i < notes.size(); i++) {
 			NoteModel noteModel = notes.get(i);
 			String firstKey = noteModel.getKey();
