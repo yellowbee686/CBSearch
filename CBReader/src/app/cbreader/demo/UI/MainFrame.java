@@ -29,6 +29,8 @@ public class MainFrame extends JFrame implements ActionListener {
     private JCheckBox abaBox;
     private JCheckBox newIndexBox;
 
+    private JTextArea testArea;
+
     private boolean writeFull = true; //是否是全文加异文索引
     private boolean abaSearch = false; //是否是aba搜索模式
     private boolean newIndex = false; //是否是全新索引
@@ -134,7 +136,7 @@ public class MainFrame extends JFrame implements ActionListener {
             String keywords = searchField.getText().trim();
             SearchFiles searcher = new SearchFiles(keywords, writeFull);
             SearchResult searchResult = searcher.doSearch(new SearchOption(abaSearch));
-            FullResultFrame uiFrame = new FullResultFrame("搜索结果", searchResult);
+            FullResultTextFrame uiFrame = new FullResultTextFrame("搜索结果", searchResult);
 //            if (seaFlag) {
 //                String outDirPath = Utils.getBaseDir() + "/result";
 //                JOptionPane.showMessageDialog(this, "查询成功，请到" + outDirPath + "查阅结果文件");
