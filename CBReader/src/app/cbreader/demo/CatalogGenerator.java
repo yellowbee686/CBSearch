@@ -179,7 +179,7 @@ public class CatalogGenerator {
                             if (checkByJuanId(file, pinId)) {
                                 // 传入的outPath的文件名不完整，会在方法中补全title并填充内容
                                 ParseModel model = parser.parseOneDoc(file, ParseDocType.BODY, pinId);
-                                List<String> texts = model.getTexts();
+                                List<String> texts = model.getTexts(false);
                                 if (!texts.isEmpty()) {
                                     parser.write2File(file, texts, absolutePath + items[0], true);
                                     String[] nameArray = file.getName().split("\\.");

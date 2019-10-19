@@ -28,6 +28,15 @@ public class ParseModel {
             return text;
         }
 
+        // 将第一个note key的最后四位即行号拼在text前面返回，用于生成notes，进一步完善体例
+        public String getTextWithFirstNoteKey() {
+            if (noteKeys.size() == 0) {
+                return text;
+            }
+            String key = noteKeys.get(0);
+            return "[" + key.substring(key.length() - 4) + "]" + text;
+        }
+
         public List<String> getNoteKeys() {
             return noteKeys;
         }
@@ -57,12 +66,18 @@ public class ParseModel {
     private List<LineModel> lines = new ArrayList<>();
 
     // 返回自己包括的正文或异文部分
-    public List<String> getTexts() {
+    public List<String> getTexts(boolean withLineNumber) {
         List<String> strs = new ArrayList<>();
         if (!title.isEmpty()) {
             strs.add(title);
         }
-        strs.addAll(lines.stream().map(LineModel::getText).collect(Collectors.toList()));
+        strs.addAll(lines.stream().map(x -> {
+            if(withLineNumber) {
+                return x.getTextWithFirstNoteKey();
+            } else {
+                return x.getText();
+            }
+        }).collect(Collectors.toList()));
         return strs;
     }
 

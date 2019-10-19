@@ -177,6 +177,10 @@ public class Utils {
 
 	// isStrip为true表示剥离符号，为了全文搜索使用
 	public static List<NoteModel> getNotes(String sample, boolean isStrip) {
+		// 假设每一行最前面都是[abcd]的行号
+		int lineNumIndex = sample.indexOf("]");
+		String lineNumStr = sample.substring(1, lineNumIndex);
+		sample = sample.substring(lineNumIndex + 1);
 		String[] arr = sample.split(KEY_SPLITER);
 		//默认等号前面的正文不会出现两个key，如果出现了，是软件错误，需要人工收录
 		// TODO 软件错误需要再排查，目前先不考虑
@@ -243,7 +247,7 @@ public class Utils {
 			if (isStrip && !isEqual) {
 				secondKey = stripNote(secondKey, isAdd);
 			}
-			NoteModel model = new NoteModel(isEqual, firstKey, secondKey);
+			NoteModel model = new NoteModel(isEqual, firstKey, secondKey, lineNumStr);
 			ret.add(model);
 		}
 		return ret;

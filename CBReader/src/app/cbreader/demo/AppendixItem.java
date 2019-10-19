@@ -13,11 +13,11 @@ public class AppendixItem {
 		this.key = key;
 	}
 	
-	public void add(String wrongKey, String volumn) {
+	public void add(String wrongKey, String volume) {
 		if(!correctMap.containsKey(wrongKey)) {
 			correctMap.put(wrongKey, new ArrayList<>());
 		}
-		correctMap.get(wrongKey).add(volumn);
+		correctMap.get(wrongKey).add(volume);
 	}
 
 	@Override

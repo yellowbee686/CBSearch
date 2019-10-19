@@ -9,11 +9,13 @@ public class NoteModel {
     private boolean isEqual; //是否是等号关系
     private String key;
     private String note;
+    private String lineNumStr;
 
-    public NoteModel(boolean isEqual, String key, String note) {
+    public NoteModel(boolean isEqual, String key, String note, String lineNumStr) {
         this.isEqual = isEqual;
         this.key = key;
         this.note = note;
+        this.lineNumStr = lineNumStr;
     }
 
     public boolean isEqual() {
@@ -26,5 +28,9 @@ public class NoteModel {
 
     public String getNote() {
         return note;
+    }
+
+    public String getLineNumStr() {
+        return lineNumStr;
     }
 }

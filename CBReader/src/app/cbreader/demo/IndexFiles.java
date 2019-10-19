@@ -257,7 +257,7 @@ public class IndexFiles {
 						if(parseReference) {
 							// 如果有catalog，则需要校验是否在其中
 							if (!buildCatalog || catalogGenerator.isFileMatch(onlyId)) {
-								referenceOne(tmp, onlyId);
+								referenceOne(tmp, fileName);
 							}
 						}
 						sb.append(tmp).append("\r\n");
@@ -311,15 +311,15 @@ public class IndexFiles {
 			NoteModel noteModel = notes.get(i);
 			String firstKey = noteModel.getKey();
 			String secondKey = noteModel.getNote();
-			if(i==0) {
-				if(!references.containsKey(firstKey)) {
-					Reference ref = new Reference(firstKey, references);
-					references.put(firstKey, ref);
-				}
+
+			if(!references.containsKey(firstKey)) {
+				Reference ref = new Reference(firstKey, references);
+				references.put(firstKey, ref);
 			}
 
+
 			Reference ref = references.get(firstKey);
-			ref.add(secondKey, fileName);
+			ref.add(secondKey, fileName, noteModel.getLineNumStr());
 			catalogCount++;
 			// 只有相等的情况，才需要以异文作为主key
 			if(noteModel.isEqual()) {
@@ -348,9 +348,6 @@ public class IndexFiles {
 			outDir.mkdirs();
 		}
 
-        for (Reference reference : references.values()) {
-            reference.sortSelf();
-        }
 		int fileNum = 0;
 		StringBuilder builder = new StringBuilder();
 		//按照笔画顺序输出每一个不同项的体例

@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -292,14 +291,16 @@ public class EmendationParser {
     public void write2File(File doc, List<String> strings, String outPath, boolean withTitle) {
         try {
             if(!strings.isEmpty()) {
-                String title = ""; //title放在strings最前
                 if (withTitle) {
-                    title = strings.get(0);
+                    String title = strings.get(0); //title放在strings最前
+                    String fileName = doc.getName();
+                    fileName = fileName.substring(0, fileName.length()-4); //去除扩展名
+                    String juanId = fileName.substring(fileName.indexOf("_"));
+                    outPath = outPath + juanId + "_" + title + ".txt";
+                } else {
+                    outPath = outPath + ".txt";
                 }
-                String fileName = doc.getName();
-                fileName = fileName.substring(0, fileName.length()-4); //去除扩展名
-                String juanId = fileName.substring(fileName.indexOf("_"));
-                outPath = outPath + juanId + "_" + title + ".txt";
+
                 //System.out.println(String.format("start write %s", outPath));
                 File outFile = new File(outPath);
                 if(!outFile.exists()) {
@@ -497,7 +498,7 @@ public class EmendationParser {
 
     protected void processOneFile(File file, Map<String, String> pathMap) {
         ParseModel model = parseOneDoc(file, ParseDocType.BACK, "");
-        List<String> texts = model.getTexts();
+        List<String> texts = model.getTexts(true);
         write2File(file, texts, getOutputPath(file), false);
     }
 
