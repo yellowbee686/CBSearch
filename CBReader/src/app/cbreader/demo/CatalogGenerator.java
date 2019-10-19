@@ -99,7 +99,7 @@ public class CatalogGenerator {
     // 遍历所有数据源文件，筛选出catalog.txt中的各个按朝代人名区分的文件，将正文写入对应的catalog/目录下
     // 暂时是有状态的，会填充matchFileMap 为fullTextSearch筛选文件夹提供指导
     public void buildCatalog() {
-        BufferedReader reader = Utils.openFile("/dictData/catalog.txt");
+        BufferedReader reader = Utils.openFile("/dictData/catalog_20191019.txt");
         if(reader == null) {
             return;
         }

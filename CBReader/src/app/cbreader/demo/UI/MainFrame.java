@@ -116,7 +116,7 @@ public class MainFrame extends JFrame implements ActionListener {
             if (ret == JFileChooser.APPROVE_OPTION) {
                 String dirPath = dirChooser.getSelectedFile().getAbsolutePath();
                 chooseField.setText(dirPath);
-                IndexFiles indexer = new IndexFiles(dirPath, true, writeFull, false,
+                IndexFiles indexer = new IndexFiles(dirPath, true, writeFull, true,
                         true, true);
                 indexer.buildCatalog();
                 indexer.prepareIndex();

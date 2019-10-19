@@ -246,7 +246,7 @@ public class IndexFiles {
 					} else {
 						System.out.println("index one wrong filename="+fileName);
 					}
-					String onlyId = fileName.substring(0, fileName.lastIndexOf("_"));
+					// String onlyId = fileName.substring(0, fileName.lastIndexOf("_"));
 					BufferedReader bfReader = new BufferedReader(
 							new InputStreamReader(fis, StandardCharsets.UTF_8));
 					StringBuilder sb = new StringBuilder();
@@ -255,8 +255,8 @@ public class IndexFiles {
 						if (null == tmp)
 							break;
 						if(parseReference) {
-							// 如果有catalog，则需要校验是否在其中
-							if (!buildCatalog || catalogGenerator.isFileMatch(onlyId)) {
+							// 如果有catalog，则需要校验是否在其中，即有catalog时根据其范围生成reference，否则生成全部reference
+							if (!buildCatalog || catalogGenerator.isFileMatch(fileName)) {
 								referenceOne(tmp, fileName);
 							}
 						}
