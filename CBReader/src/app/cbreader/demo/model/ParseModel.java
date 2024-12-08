@@ -28,13 +28,13 @@ public class ParseModel {
             return text;
         }
 
-        // 将第一个note key的最后四位即行号拼在text前面返回，用于生成notes，进一步完善体例
+        // 将第一个note key的行号拼在text前面返回，用于生成notes，进一步完善体例
         public String getTextWithFirstNoteKey() {
             if (noteKeys.size() == 0) {
                 return text;
             }
             String key = noteKeys.get(0);
-            return "[" + key.substring(key.length() - 4) + "]" + text;
+            return "[" + key + "]" + text;
         }
 
         public List<String> getNoteKeys() {
