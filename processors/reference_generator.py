@@ -42,9 +42,10 @@ def parse_stroke_data(file_path):
 
 
 class ReferenceGenerator:
-    def __init__(self, note_path: str, reference_path: str):
+    def __init__(self, note_path: str, reference_path: str, log_error: bool = False):
         self.note_path = note_path
         self.reference_path = reference_path
+        self.log_error = log_error
         self.stroke_data = parse_stroke_data("processors/Unihan_IRGSources.txt")
         # index by stroke
         self.reference_arr = []
@@ -151,7 +152,8 @@ class ReferenceGenerator:
                         second_key = part
                         items = part.split("＋")
                         if len(items) == 1:
-                            print(f"error format with add:{file_path} pos:{pos} line:{line}")
+                            if self.log_error:
+                                print(f"error format with add:{file_path} pos:{pos} line:{line}")
                             break
                         if "（" in items[0]:
                             first_key = items[1].strip()
@@ -172,16 +174,85 @@ class ReferenceGenerator:
                         continue
 
                     if first_key is None or len(first_key) == 0:
-                        print(f"error format first_key:{file_path} pos:{pos} line:{line}")
+                        if self.log_error:
+                            print(f"error format first_key:{file_path} pos:{pos} line:{line}")
                         break
 
                     self.record_one_reference(first_key, second_key, simple_file_name, pos, False, ref_type)
                     if backtrack:
                         if second_key is None or len(second_key) == 0:
-                            print(f"error format second_key:{file_path} pos:{pos} line:{line}")
+                            if self.log_error:
+                                print(f"error format second_key:{file_path} pos:{pos} line:{line}")
                             break
                         else:
                             self.record_one_reference(second_key, first_key, simple_file_name, pos, True, ref_type)
+
+    def format_reference_lines(self, first_key: str, idx: int) -> list[str]:
+        """
+        格式化参考文献行
+        Args:
+            first_key: 主关键字
+            refs: 引用字典，格式为 dict{second_key:[Reference]}
+        Returns:
+            list: 格式化后的文本行列表
+        """
+        refs = self.reference_arr[idx][first_key]
+        lines = []
+        lines.append(f"【{first_key}】")
+        
+        # 按ref_type从小到大排序，同type内按引用数量从多到少排序
+        refs = sorted(refs.items(), 
+                     key=lambda x: (min(ref.ref_type for ref in x[1]), -len(x[1])))
+        
+        for j, one_key_refs in enumerate(refs):
+            second_key, key_pair_refs = one_key_refs
+            ref_str = f"[{j+1}]{second_key}（"
+            
+            # 分组并排序
+            true_refs = sorted([ref for ref in key_pair_refs if ref.backtrack], 
+                             key=lambda x: x.file_name)
+            false_refs = sorted([ref for ref in key_pair_refs if not ref.backtrack], 
+                              key=lambda x: x.file_name)
+            
+            # 处理正文引用
+            if len(false_refs) > 0:
+                ref_str += "正："
+                ref_str += self._format_refs_group(false_refs)
+            
+            # 处理异文引用
+            if len(true_refs) > 0:
+                if len(false_refs) > 0:
+                    ref_str += "|"
+                ref_str += "異："
+                ref_str += self._format_refs_group(true_refs)
+                ref_str += "）"
+                
+            lines.append(ref_str)
+        
+        return lines
+
+    def _format_refs_group(self, refs: list) -> str:
+        """
+        格式化单个引用组
+        Args:
+            refs: Reference对象列表
+        Returns:
+            str: 格式化后的引用字符串
+        """
+        result = ""
+        for k, ref in enumerate(refs):
+            if k > 0:
+                last_ref = refs[k - 1]
+                last_juan = last_ref.file_name.split("_")[0]
+                current_parts = ref.file_name.split("_")
+                juan = current_parts[0]
+                if last_juan == juan:
+                    result += f"+{current_parts[1]}({ref.position})"
+                else:
+                    result += f"/{ref.file_name}({ref.position})"
+            else:
+                result += f"{ref.file_name}({ref.position})"
+        return result
 
     def write_all_reference(self):  
         # mkdir self.reference_path
@@ -195,55 +266,7 @@ class ReferenceGenerator:
                 first_keys = sorted(self.reference_arr[i].keys())
 
                 for first_key in first_keys:
-                    lines = []
-                    lines.append(f"【{first_key}】")
-                    refs = self.reference_arr[i][first_key]
-                    # refs现在是一个dict{second_key:[Reference]}，先按ref_type从小到大排，同type内按len([Reference])排序
-                    refs = sorted(refs.items(), 
-                                key=lambda x: (min(ref.ref_type for ref in x[1]), -len(x[1])))
-                    for j, one_key_refs in enumerate(refs):
-                        second_key, key_pair_refs = one_key_refs
-                        ref_str = f"[{j+1}]{second_key}（"
-                        # key_pair_refs是[Reference] 按backtrack分成True False两组
-                        true_refs = [ref for ref in key_pair_refs if ref.backtrack]
-                        false_refs = [ref for ref in key_pair_refs if not ref.backtrack]
-                        # 每一类再按文件名排序
-                        true_refs = sorted(true_refs, key=lambda x: x.file_name)
-                        false_refs = sorted(false_refs, key=lambda x: x.file_name)
-                        
-                        if len(false_refs) > 0:
-                            ref_str += "正："
-                        for k, ref in enumerate(false_refs):
-                            if k > 0:
-                                last_ref = false_refs[k - 1]
-                                last_juan = last_ref.file_name.split("_")[0]
-                                current_parts = ref.file_name.split("_")
-                                juan = current_parts[0]
-                                if last_juan == juan:
-                                    ref_str += f"+{current_parts[1]}({ref.position})" 
-                                else:
-                                    ref_str += f"/{ref.file_name}({ref.position})"
-                            else:
-                                ref_str += f"{ref.file_name}({ref.position})"
-                        
-                        if len(true_refs) > 0:
-                            if len(false_refs) > 0:
-                                ref_str += "|"
-                            ref_str += "異："
-                            for k, ref in enumerate(true_refs):
-                                if k > 0:
-                                    last_ref = true_refs[k - 1]
-                                    last_juan = last_ref.file_name.split("_")[0]
-                                    current_parts = ref.file_name.split("_")
-                                    juan = current_parts[0]
-                                    if last_juan == juan:
-                                        ref_str += f"+{current_parts[1]}({ref.position})" 
-                                    else:
-                                        ref_str += f"/{ref.file_name}({ref.position})"
-                                else:
-                                    ref_str += f"{ref.file_name}({ref.position})"
-                            ref_str += "）"
-                        lines.append(ref_str)
+                    lines = self.format_reference_lines(first_key, i)
                     f.write("\n".join(lines))
                     f.write("\n\n")
                                 
@@ -254,7 +277,7 @@ class ReferenceGenerator:
 # 写入一段main方法
 
 if __name__ == "__main__":
-    rg = ReferenceGenerator("./notes", "./new_references")
+    rg = ReferenceGenerator("./notes", "./new_references", True)
     # print("walk note files")
     rg.walk_note_files()
     # print("write all references")
