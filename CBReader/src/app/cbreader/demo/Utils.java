@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.sun.istack.internal.Nullable;
+// import com.sun.istack.internal.Nullable;
 
 import app.cbreader.demo.model.NoteModel;
 
@@ -93,7 +93,7 @@ public class Utils {
 		return path;
 	}
 
-	@Nullable
+	// @Nullable
 	public static BufferedReader openFile(String relativeName) {
 		String path = getBaseDir()+relativeName;
 		File file = new File(path);

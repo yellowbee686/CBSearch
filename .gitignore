@@ -1,5 +1,13 @@
 out
+catalog
 notes
 references
-new_references
+new_references*
+index
 err.log
+CBETADATA
+dom4j-1.6.1
+lucene-4.8.1
+CBReader/lib
+CBReader/bin
+IK Analyzer 2012FF_hf1.zip

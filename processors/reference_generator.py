@@ -93,8 +93,8 @@ class ReferenceGenerator:
         # 读取文件的每一行
         with open(file_path, 'r', encoding='utf-8') as f:
             for line in f:
-                pos = line[1:5]
-                line = line[6:].strip()
+                pos = line[1:8]
+                line = line[9:].strip()
                 parts = line.split("，")
                 first_key = None
                 for i, part in enumerate(parts):
@@ -244,8 +244,8 @@ class ReferenceGenerator:
                                     ref_str += f"{ref.file_name}({ref.position})"
                             ref_str += "）"
                         lines.append(ref_str)
-                    f.write("\r\n".join(lines))
-                    f.write("\r\n\r\n")
+                    f.write("\n".join(lines))
+                    f.write("\n\n")
                                 
 
                         

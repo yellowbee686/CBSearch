@@ -23,18 +23,24 @@ public class ParseModel {
     class LineModel {
         private String text;
         private List<String> noteKeys;
+        private static final int REMAIN_LENGTH = 7;
+        private static final int SHORTREMAIN_LENGTH = 4;
 
         public String getText() {
             return text;
         }
 
-        // 将第一个note key的行号拼在text前面返回，用于生成notes，进一步完善体例
+        // 将第一个note key的最后7位数字行号拼在text前面返回，用于生成notes，进一步完善体例
         public String getTextWithFirstNoteKey() {
             if (noteKeys.size() == 0) {
                 return text;
             }
             String key = noteKeys.get(0);
-            return "[" + key + "]" + text;
+            int remain_length = REMAIN_LENGTH;
+            if (key.length() < REMAIN_LENGTH) {
+                remain_length = SHORTREMAIN_LENGTH;
+            }
+            return "[" + key.substring(key.length() - remain_length) + "]" + text;
         }
 
         public List<String> getNoteKeys() {
